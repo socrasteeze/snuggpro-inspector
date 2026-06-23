@@ -1,0 +1,14 @@
+{
+  "name": "snuggpro-inspector",
+  "version": "1.0.0",
+  "description": "Local proxy + browser UI to inspect SnuggPro jobs by ID and flatten measures for reporting/import.",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
