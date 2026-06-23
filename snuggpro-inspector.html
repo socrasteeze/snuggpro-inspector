@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SnuggPro Inspector</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; background: #f5f5f4; color: #1c1c1c; min-height: 100vh; }
+  a { color: #1c6ef2; }
+
+  /* Layout */
+  .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .sidebar { background: #1a1a1a; color: #d4d4d4; padding: 0; overflow-y: auto; position: sticky; top: 0; height: 100vh; }
+  .main { padding: 24px; overflow-y: auto; }
+
+  /* Sidebar */
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #2e2e2e; }
+  .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; }
+  .sidebar-header p { font-size: 11px; color: #888; margin-top: 2px; }
+  .sidebar-section { padding: 8px 0; border-bottom: 1px solid #2e2e2e; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 16px 4px; }
+  .nav-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 6px 16px; font-size: 12px; color: #b0b0b0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-item:hover { background: #2a2a2a; color: #fff; }
+  .nav-item.active { background: #1c6ef2; color: #fff; }
+  .nav-item .method { font-size: 9px; font-weight: 700; background: #2e2e2e; color: #888; padding: 1px 4px; border-radius: 3px; margin-right: 6px; }
+  .nav-item.active .method { background: rgba(255,255,255,0.2); color: #fff; }
+
+  /* Job ID bar */
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px; }
+  .topbar label { font-size: 12px; color: #666; white-space: nowrap; }
+  .topbar input { border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 140px; }
+  .topbar input:focus { outline: none; border-color: #1c6ef2; }
+  .topbar .fetch-btn { background: #1c6ef2; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .topbar .fetch-btn:hover { background: #1558c0; }
+  .topbar .fetch-btn:disabled { background: #a0b8e8; cursor: default; }
+  .topbar .endpoint-display { font-size: 12px; color: #888; font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .status-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+  .badge-ok { background: #e6f4ea; color: #1a7a3a; }
+  .badge-err { background: #fde8e8; color: #b91c1c; }
+  .badge-loading { background: #e8f0fe; color: #1c6ef2; }
+
+  /* Result area */
+  .result-wrap { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; }
+  .result-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
+  .result-toolbar h2 { font-size: 13px; font-weight: 600; flex: 1; }
+  .tool-btn { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: 1px solid #e5e5e5; background: #fff; cursor: pointer; color: #444; }
+  .tool-btn:hover { background: #f5f5f5; }
+  .tool-btn.active { background: #1c6ef2; color: #fff; border-color: #1c6ef2; }
+
+  /* Views */
+  #friendly-view { padding: 16px; }
+  #raw-view { display: none; padding: 0; }
+  #raw-view pre { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; line-height: 1.6; padding: 16px; white-space: pre-wrap; word-break: break-all; max-height: 70vh; overflow-y: auto; color: #1c1c1c; }
+
+  /* Field cards */
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .field-card { background: #f8f8f8; border: 1px solid #ebebeb; border-radius: 6px; padding: 8px 10px; }
+  .field-key { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .field-val { font-size: 13px; font-weight: 500; word-break: break-word; }
+  .field-val.null-val { color: #bbb; font-weight: 400; }
+  .section-label { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin: 14px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #f0f0f0; }
+  .array-item { background: #f8f8f8; border: 1px solid #ebebeb; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+  .array-item-header { font-size: 11px; color: #888; margin-bottom: 8px; }
+  .empty-state { color: #aaa; font-size: 13px; text-align: center; padding: 40px; }
+  .err-block { background: #fde8e8; border: 1px solid #fbc8c8; border-radius: 6px; padding: 12px 14px; color: #b91c1c; font-size: 13px; margin: 16px; }
+  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 14px 0; }
+
+  /* Measures table */
+  .measures-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #f0f0f0; background: #fafafa; flex-wrap: wrap; }
+  .measures-toolbar .spacer { flex: 1; }
+  .measures-toolbar .summary { font-size: 12px; color: #666; }
+  .csv-btn { background: #1a7a3a; color: #fff; border: none; border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+  .csv-btn:hover { background: #156430; }
+  .table-scroll { overflow-x: auto; max-height: 72vh; }
+  table.measures { border-collapse: collapse; width: 100%; font-size: 12px; }
+  table.measures th, table.measures td { padding: 7px 10px; text-align: left; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  table.measures th { background: #f5f5f4; position: sticky; top: 0; font-weight: 600; cursor: pointer; user-select: none; z-index: 1; }
+  table.measures th:hover { background: #ebebea; }
+  table.measures th .arrow { color: #1c6ef2; margin-left: 3px; font-size: 10px; }
+  table.measures td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.measures tr:hover td { background: #f8fbff; }
+  table.measures .measure-cell { font-weight: 500; }
+  table.measures .src-rec { color: #1558c0; font-size: 10px; font-weight: 600; }
+  table.measures .src-di { color: #8a4b00; font-size: 10px; font-weight: 600; }
+  table.measures .neg { color: #b91c1c; }
+  table.measures td.copyable { cursor: pointer; }
+  table.measures td.copyable:hover { background: #eef4ff; outline: 1px solid #cdddf5; }
+  table.measures td.copied { background: #d6f0dd !important; outline: 1px solid #8fcea4; }
+
+  /* Combined summary */
+  .combined-summary { padding: 14px; border-bottom: 1px solid #f0f0f0; background: #fcfcfb; }
+  .csum-basis { font-size: 12px; padding: 6px 10px; border-radius: 5px; margin-bottom: 10px; display: inline-block; }
+  .csum-basis.basis-saved { background: #e6f4ea; color: #156430; }
+  .csum-basis.basis-deemed { background: #e8f0fe; color: #1558c0; }
+  .csum-basis.basis-warn { background: #fdecec; color: #b91c1c; }
+  .csum-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .csum-card { flex: 1; min-width: 140px; background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 10px 14px; }
+  .csum-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .csum-val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .csum-unit { font-size: 12px; font-weight: 400; color: #999; margin-left: 4px; }
+  .csum-breakdown { font-size: 11px; color: #888; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>SnuggPro Inspector</h1>
+    <p>localhost:3001 proxy</p>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Reporting</div>
+    <button class="nav-item active" data-path="MEASURES" data-label="Measures Table"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Measures Table</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Job</div>
+    <button class="nav-item" data-path="/jobs/{jobId}" data-label="Address & Metadata"><span class="method">GET</span>Address & Metadata</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/all-data" data-label="All Job Data"><span class="method">GET</span>All Job Data</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/basedata" data-label="Basedata"><span class="method">GET</span>Basedata</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/account" data-label="Account"><span class="method">GET</span>Account</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/company" data-label="Company"><span class="method">GET</span>Company</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/program" data-label="Program"><span class="method">GET</span>Program</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/job-stage-history" data-label="Stage History"><span class="method">GET</span>Stage History</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/alerts" data-label="Alerts"><span class="method">GET</span>Alerts</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/metrics-summary" data-label="Metrics Summary"><span class="method">GET</span>Metrics Summary</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/model" data-label="Model"><span class="method">GET</span>Model</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/hes-score" data-label="HES Score"><span class="method">GET</span>HES Score</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/utilities" data-label="Utilities"><span class="method">GET</span>Utilities</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/snapshots" data-label="Snapshots"><span class="method">GET</span>Snapshots</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/hpxml" data-label="HPXML Link"><span class="method">GET</span>HPXML Link</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/report" data-label="Report"><span class="method">GET</span>Report</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/tickets" data-label="Tickets"><span class="method">GET</span>Tickets</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/checklist-answers" data-label="Checklist Answers"><span class="method">GET</span>Checklist Answers</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/custom-lifetime-savings" data-label="Custom Lifetime Savings"><span class="method">GET</span>Custom Lifetime Savings</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/job-financings" data-label="Job Financings"><span class="method">GET</span>Job Financings</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Building Systems</div>
+    <button class="nav-item" data-path="/jobs/{jobId}/attics" data-label="Attics"><span class="method">GET</span>Attics</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/walls" data-label="Walls"><span class="method">GET</span>Walls</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/vaults" data-label="Vaults"><span class="method">GET</span>Vaults</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/windows" data-label="Windows"><span class="method">GET</span>Windows</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/doors" data-label="Doors"><span class="method">GET</span>Doors</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/hvacs" data-label="HVACs"><span class="method">GET</span>HVACs</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/dhws" data-label="Water Heaters"><span class="method">GET</span>Water Heaters</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/caz" data-label="CAZ"><span class="method">GET</span>CAZ</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Appliances</div>
+    <button class="nav-item" data-path="/jobs/{jobId}/refrigerators" data-label="Refrigerators"><span class="method">GET</span>Refrigerators</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/freezers" data-label="Freezers"><span class="method">GET</span>Freezers</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/dishwashers" data-label="Dishwashers"><span class="method">GET</span>Dishwashers</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/clothesDryers" data-label="Clothes Dryers"><span class="method">GET</span>Clothes Dryers</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/ovens" data-label="Ovens"><span class="method">GET</span>Ovens</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/ranges" data-label="Ranges"><span class="method">GET</span>Ranges</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/pvs" data-label="PV Systems"><span class="method">GET</span>PV Systems</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Program & Financials</div>
+    <button class="nav-item" data-path="/jobs/{jobId}/recommendations" data-label="Recommendations"><span class="method">GET</span>Recommendations</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/incentives" data-label="Incentives"><span class="method">GET</span>Incentives</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/rebates-incentives" data-label="Rebates & Incentives"><span class="method">GET</span>Rebates & Incentives</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/direct-installs" data-label="Direct Installs"><span class="method">GET</span>Direct Installs</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/work-orders" data-label="Work Orders"><span class="method">GET</span>Work Orders</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/health" data-label="Health Measures"><span class="method">GET</span>Health Measures</button>
+    <button class="nav-item" data-path="/jobs/{jobId}/concerns" data-label="Concerns"><span class="method">GET</span>Concerns</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Account / Company</div>
+    <button class="nav-item" data-path="/jobs" data-label="All Jobs"><span class="method">GET</span>All Jobs</button>
+    <button class="nav-item" data-path="/companies" data-label="Companies"><span class="method">GET</span>Companies</button>
+    <button class="nav-item" data-path="/programs" data-label="Programs"><span class="method">GET</span>Programs</button>
+    <button class="nav-item" data-path="/accounts" data-label="Accounts"><span class="method">GET</span>Accounts</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <label>Job ID</label>
+    <input type="text" id="jobId" value="332046" placeholder="e.g. 332046" />
+    <button class="fetch-btn" id="fetchBtn" onclick="doFetch()">Fetch</button>
+    <span class="endpoint-display" id="endpointDisplay">/jobs/{jobId}</span>
+    <span class="status-badge" id="statusBadge" style="display:none"></span>
+  </div>
+
+  <div class="result-wrap" id="resultWrap" style="display:none">
+    <div class="result-toolbar">
+      <h2 id="resultTitle"></h2>
+      <button class="tool-btn active" id="btnFriendly" onclick="setView('friendly')">Fields</button>
+      <button class="tool-btn" id="btnRaw" onclick="setView('raw')">Raw JSON</button>
+      <button class="tool-btn" id="btnCopy" onclick="copyJson()">Copy</button>
+    </div>
+    <div id="friendly-view"></div>
+    <div id="raw-view"><pre id="rawPre"></pre></div>
+  </div>
+</main>
+
+</div>
+<script>
+let currentPath = '/jobs/{jobId}';
+let lastData = null;
+let currentView = 'friendly';
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPath = btn.dataset.path;
+    document.getElementById('endpointDisplay').textContent = currentPath;
+  });
+});
+
+function resolvedPath() {
+  const jobId = document.getElementById('jobId').value.trim();
+  return currentPath.replace('{jobId}', jobId);
+}
+
+async function doFetch() {
+  const jobId = document.getElementById('jobId').value.trim();
+
+  // Special reporting view
+  if (currentPath === 'MEASURES') {
+    if (!jobId) { alert('Enter a Job ID.'); return; }
+    return fetchMeasures(jobId);
+  }
+
+  if (!jobId && currentPath.includes('{jobId}')) {
+    alert('Enter a Job ID.');
+    return;
+  }
+
+  const path = resolvedPath();
+  const url = `http://localhost:3001/proxy${path}`;
+  const label = document.querySelector('.nav-item.active')?.dataset.label || path;
+
+  setBadge('loading', 'Fetching…');
+  document.getElementById('resultWrap').style.display = 'block';
+  document.getElementById('resultTitle').textContent = label;
+  document.getElementById('friendly-view').innerHTML = '';
+  document.getElementById('rawPre').textContent = '';
+  document.getElementById('endpointDisplay').textContent = path;
+  setView('friendly');
+
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(_) { data = text; }
+    lastData = data;
+
+    if (!res.ok) {
+      setBadge('err', `${res.status} ${res.statusText}`);
+      document.getElementById('friendly-view').innerHTML = `<div class="err-block">${res.status} — ${typeof data === 'string' ? data : JSON.stringify(data)}</div>`;
+      document.getElementById('rawPre').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      return;
+    }
+
+    setBadge('ok', `${res.status} OK`);
+    document.getElementById('rawPre').textContent = JSON.stringify(data, null, 2);
+    renderFriendly(data);
+  } catch(e) {
+    setBadge('err', 'Network error');
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
+  }
+}
+
+// ---------- MEASURES REPORTING VIEW ----------
+let measureRows = [];
+let sortKey = null;
+let sortDir = 1;
+
+const MEASURE_COLS = [
+  { key: 'measure',     label: 'Measure',     num: false },
+  { key: 'source',      label: 'Src',         num: false },
+  { key: 'name',        label: 'Line Item',   num: false },
+  { key: 'code',        label: 'Code',        num: false },
+  { key: 'quantity',    label: 'Qty',         num: true  },
+  { key: 'unit',        label: 'Unit',        num: false },
+  { key: 'costPerUnit', label: 'Cost/Unit',   num: true  },
+  { key: 'lineCost',    label: 'Line Cost',   num: true  },
+  { key: 'savedKwh',    label: 'Saved kWh',   num: true  },
+  { key: 'savedTherms', label: 'Saved Therms',num: true  },
+  { key: 'savedMmbtu',  label: 'Saved MMBTU', num: true  },
+  { key: 'deemedKwh',   label: 'Deemed kWh',  num: true  },
+  { key: 'deemedTherms',label: 'Deemed Therms', num: true },
+  { key: 'deemedMmbtu', label: 'Deemed MMBTU', num: true }
+];
+
+function num(v) { return (v === null || v === undefined || v === '') ? null : Number(v); }
+
+function flattenMeasures(data) {
+  const rows = [];
+
+  // Recommendations → only active/selected (status "1"); one row per detailedCost line item
+  (data.recommendations || []).filter(rec => rec.status == '1').forEach(rec => {
+    const base = {
+      measure: rec.title,
+      savedKwh: num(rec.savedKwh),
+      savedTherms: num(rec.savedTherms),
+      savedMmbtu: num(rec.savedMbtu),
+      deemedKwh: null, deemedTherms: null, deemedMmbtu: null
+    };
+    const costs = rec.detailedCosts || [];
+    if (costs.length === 0) {
+      // measure with no line items but real savings/cost → keep as a single row
+      const c = num(rec.cost);
+      const hasValue = c || base.savedKwh || base.savedTherms;
+      if (hasValue) rows.push({ ...base, source: 'rec', name: rec.title, code: rec.measureCode || '', quantity: null, unit: '', costPerUnit: null, lineCost: c });
+    } else {
+      costs.forEach(li => {
+        const qty = num(li.quantity);
+        const cpu = num(li.costPerUnit);
+        rows.push({
+          ...base,
+          source: 'rec',
+          name: li.name || '',
+          code: li.code || '',
+          quantity: qty,
+          unit: li.unit || '',
+          costPerUnit: cpu,
+          lineCost: (qty != null && cpu != null) ? +(qty * cpu).toFixed(2) : num(rec.cost)
+        });
+      });
+    }
+  });
+
+  // Direct installs → one row per line item; deemed savings are PER UNIT, so multiply by quantity
+  (data.directInstalls || []).forEach(di => {
+    (di.lineItems || []).forEach(li => {
+      const qty = num(li.quantity);
+      const cpu = num(li.costPerUnit);
+      const labor = num(li.laborCostPerUnit) || 0;
+      const q = qty == null ? 1 : qty;
+      const dk = num(li.deemedAnnualKwhSavings);
+      const dt = num(li.deemedThermsSavings);
+      const dm = num(li.deemedMmbtuSavings);
+      rows.push({
+        measure: 'Direct Install',
+        source: 'DI',
+        name: li.name ? li.name.trim() : '',
+        code: li.code || '',
+        quantity: qty,
+        unit: li.unit || '',
+        costPerUnit: cpu,
+        lineCost: (qty != null && cpu != null) ? +(qty * (cpu + labor)).toFixed(2) : null,
+        savedKwh: null, savedTherms: null, savedMmbtu: null,
+        deemedKwh: dk == null ? null : +(dk * q).toFixed(4),
+        deemedTherms: dt == null ? null : +(dt * q).toFixed(4),
+        deemedMmbtu: dm == null ? null : +(dm * q).toFixed(6)
+      });
+    });
+  });
+
+  return rows;
+}
+
+async function fetchMeasures(jobId) {
+  const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
+  setBadge('loading', 'Fetching…');
+  document.getElementById('resultWrap').style.display = 'block';
+  document.getElementById('resultTitle').textContent = 'Measures Table';
+  document.getElementById('friendly-view').innerHTML = '<div style="padding:20px;color:#888">Loading all-data…</div>';
+  document.getElementById('rawPre').textContent = '';
+  document.getElementById('endpointDisplay').textContent = `/jobs/${jobId}/all-data`;
+  setView('friendly');
+
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(_) { data = null; }
+
+    if (!res.ok || !data) {
+      setBadge('err', `${res.status} ${res.statusText}`);
+      document.getElementById('friendly-view').innerHTML = `<div class="err-block">${res.status} — ${typeof data === 'string' ? data : text}</div>`;
+      return;
+    }
+
+    lastData = data;
+    document.getElementById('rawPre').textContent = JSON.stringify(data, null, 2);
+    measureRows = flattenMeasures(data);
+    sortKey = null;
+    setBadge('ok', `${measureRows.length} line items`);
+    renderMeasures();
+  } catch(e) {
+    setBadge('err', 'Network error');
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
+  }
+}
+
+function buildCombinedSummary() {
+  // Sum modeled (saved) and deemed separately from the flattened rows
+  const s = { savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0 };
+  measureRows.forEach(r => Object.keys(s).forEach(k => { if (typeof r[k] === 'number') s[k] += r[k]; }));
+
+  const combinedKwh = s.savedKwh + s.deemedKwh;
+  const combinedTherms = s.savedTherms + s.deemedTherms;
+  const combinedMmbtu = s.savedMmbtu + s.deemedMmbtu;
+
+  // Pull overall % energy savings from rebatesIncentives metadata if present
+  let pct = null;
+  try {
+    const ri = (lastData.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
+    if (ri && ri.metadataJSON) {
+      const meta = JSON.parse(ri.metadataJSON);
+      const row = meta.find(m => m.key === 'combinedTotalEnergySavings');
+      if (row) pct = Number(row.value);
+    }
+  } catch(_) {}
+
+  // Determine reporting basis
+  let basis, basisClass;
+  if (pct == null)       { basis = 'Unknown — no savings % available'; basisClass = 'basis-warn'; }
+  else if (pct > 15)     { basis = `Modeled (saved) · ${pct.toFixed(1)}% savings`; basisClass = 'basis-saved'; }
+  else if (pct >= 5)     { basis = `Deemed · ${pct.toFixed(1)}% savings`; basisClass = 'basis-deemed'; }
+  else                   { basis = `Below 5% (${pct.toFixed(1)}%) — review`; basisClass = 'basis-warn'; }
+
+  const card = (label, val, unit) =>
+    `<div class="csum-card"><div class="csum-label">${label}</div><div class="csum-val">${val.toFixed(2)}<span class="csum-unit">${unit}</span></div></div>`;
+
+  let h = '<div class="combined-summary">';
+  h += `<div class="csum-basis ${basisClass}">Reporting basis: <strong>${basis}</strong></div>`;
+  h += '<div class="csum-grid">';
+  h += card('Combined kWh', combinedKwh, 'kWh');
+  h += card('Combined Therms', combinedTherms, 'thm');
+  h += card('Combined MMBTU', combinedMmbtu, 'MMBTU');
+  h += '</div>';
+  h += `<div class="csum-breakdown">Modeled ${s.savedKwh.toFixed(2)} kWh / ${s.savedTherms.toFixed(2)} thm &nbsp;·&nbsp; Deemed ${s.deemedKwh.toFixed(2)} kWh / ${s.deemedTherms.toFixed(2)} thm</div>`;
+  h += '</div>';
+  return h;
+}
+
+function renderMeasures() {
+  const rows = [...measureRows];
+  if (sortKey) {
+    const col = MEASURE_COLS.find(c => c.key === sortKey);
+    rows.sort((a, b) => {
+      let x = a[sortKey], y = b[sortKey];
+      if (col.num) { x = x == null ? -Infinity : x; y = y == null ? -Infinity : y; return (x - y) * sortDir; }
+      x = (x || '').toString().toLowerCase(); y = (y || '').toString().toLowerCase();
+      return x < y ? -sortDir : x > y ? sortDir : 0;
+    });
+  }
+
+  // Totals
+  const tot = { quantity:0, lineCost:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0 };
+  rows.forEach(r => Object.keys(tot).forEach(k => { if (typeof r[k] === 'number') tot[k] += r[k]; }));
+
+  let html = '<div class="measures-toolbar">';
+  html += `<span class="summary"><strong>${rows.length}</strong> line items · <span class="src-rec">REC</span> ${rows.filter(r=>r.source==='rec').length} · <span class="src-di">DI</span> ${rows.filter(r=>r.source==='DI').length}</span>`;
+  html += '<div class="spacer"></div>';
+  html += '<button class="csv-btn" onclick="exportMeasuresCsv()">Download CSV</button>';
+  html += '</div>';
+
+  html += buildCombinedSummary();
+
+  html += '<div class="table-scroll"><table class="measures"><thead><tr>';
+  MEASURE_COLS.forEach(c => {
+    const arrow = sortKey === c.key ? `<span class="arrow">${sortDir === 1 ? '▲' : '▼'}</span>` : '';
+    html += `<th onclick="sortMeasures('${c.key}')">${c.label}${arrow}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(r => {
+    html += '<tr>';
+    MEASURE_COLS.forEach(c => {
+      let v = r[c.key];
+      if (c.key === 'source') {
+        html += `<td><span class="${v === 'rec' ? 'src-rec' : 'src-di'}">${v === 'rec' ? 'REC' : 'DI'}</span></td>`;
+        return;
+      }
+      if (c.num) {
+        const display = v == null ? '' : (Number.isInteger(v) ? v : v.toFixed(2));
+        const neg = (typeof v === 'number' && v < 0) ? ' neg' : '';
+        const copyAttr = v == null ? '' : ` data-copy="${v}" onclick="copyCell(this)" title="Click to copy"`;
+        html += `<td class="num${neg} copyable"${copyAttr}>${display}</td>`;
+      } else {
+        const cls = c.key === 'measure' ? 'measure-cell ' : '';
+        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${String(v).replace(/"/g,'&quot;')}" onclick="copyCell(this)" title="Click to copy"`;
+        html += `<td class="${cls}${(v==null||v==='')?'':'copyable'}"${copyAttr}>${v == null ? '' : v}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+
+  // Totals row
+  html += '<tr style="border-top:2px solid #ddd;font-weight:600;background:#fafafa">';
+  MEASURE_COLS.forEach(c => {
+    if (c.key === 'measure') { html += '<td class="measure-cell">TOTAL</td>'; return; }
+    if (c.num && tot[c.key] !== undefined) {
+      const v = tot[c.key];
+      const display = Number.isInteger(v) ? v : v.toFixed(2);
+      html += `<td class="num">${display}</td>`;
+    } else { html += '<td></td>'; }
+  });
+  html += '</tr>';
+
+  html += '</tbody></table></div>';
+  document.getElementById('friendly-view').innerHTML = html;
+}
+
+function copyCell(el) {
+  const val = el.getAttribute('data-copy');
+  if (val == null) return;
+  navigator.clipboard?.writeText(val);
+  el.classList.add('copied');
+  setTimeout(() => el.classList.remove('copied'), 600);
+}
+
+function sortMeasures(key) {
+  if (sortKey === key) sortDir = -sortDir;
+  else { sortKey = key; sortDir = 1; }
+  renderMeasures();
+}
+
+function exportMeasuresCsv() {
+  const jobId = document.getElementById('jobId').value.trim();
+  const headers = MEASURE_COLS.map(c => c.label);
+  const lines = [headers.join(',')];
+  measureRows.forEach(r => {
+    const cells = MEASURE_COLS.map(c => {
+      let v = r[c.key];
+      if (v === null || v === undefined) return '';
+      v = String(v);
+      if (v.includes(',') || v.includes('"') || v.includes('\n')) v = '"' + v.replace(/"/g, '""') + '"';
+      return v;
+    });
+    lines.push(cells.join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `measures_job_${jobId}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+// ---------- END MEASURES ----------
+
+function renderFriendly(data) {
+  const el = document.getElementById('friendly-view');
+  if (data === null || data === undefined) { el.innerHTML = '<div class="empty-state">Empty response</div>'; return; }
+  if (typeof data !== 'object') { el.innerHTML = `<div style="padding:16px;font-family:monospace;font-size:13px;">${data}</div>`; return; }
+
+  const arr = Array.isArray(data) ? data : [data];
+  if (arr.length === 0) { el.innerHTML = '<div class="empty-state">No records returned</div>'; return; }
+
+  let html = '';
+  const priorityKeys = ['id','job_id','uuid','address','city','state','zip','county','status','stage','name','first_name','last_name','full_name','email','phone','created_at','updated_at','service_time','account_id','company_id','program_id'];
+
+  arr.forEach((item, idx) => {
+    if (typeof item !== 'object' || !item) { html += `<div class="field-card" style="margin:4px 0"><div class="field-val">${item}</div></div>`; return; }
+
+    if (arr.length > 1) html += `<div class="section-label">Record ${idx + 1}</div>`;
+
+    const allKeys = Object.keys(item);
+    const ordered = [...new Set([...priorityKeys.filter(k => k in item), ...allKeys])];
+    const flat = ordered.filter(k => { const v = item[k]; return v === null || v === undefined || typeof v !== 'object'; });
+    const nested = ordered.filter(k => { const v = item[k]; return v !== null && v !== undefined && typeof v === 'object'; });
+
+    html += '<div class="field-grid">';
+    flat.forEach(k => {
+      const v = item[k];
+      const display = v === null || v === undefined || v === '' ? '—' : String(v);
+      const nullClass = (v === null || v === undefined || v === '') ? ' null-val' : '';
+      html += `<div class="field-card"><div class="field-key">${k}</div><div class="field-val${nullClass}">${display}</div></div>`;
+    });
+    html += '</div>';
+
+    nested.forEach(k => {
+      const sub = item[k];
+      html += `<div class="section-label">${k}</div>`;
+      if (Array.isArray(sub)) {
+        if (sub.length === 0) { html += '<div style="color:#aaa;font-size:12px;margin-bottom:12px">Empty array</div>'; return; }
+        sub.forEach((s, i) => {
+          if (typeof s !== 'object' || !s) { html += `<div class="array-item"><div class="field-val">${s}</div></div>`; return; }
+          html += `<div class="array-item"><div class="array-item-header">Item ${i + 1}</div><div class="field-grid">`;
+          Object.keys(s).forEach(sk => {
+            const sv = s[sk];
+            const display = sv === null || sv === undefined || sv === '' ? '—' : (typeof sv === 'object' ? JSON.stringify(sv) : String(sv));
+            const nullClass = (sv === null || sv === undefined || sv === '') ? ' null-val' : '';
+            html += `<div class="field-card"><div class="field-key">${sk}</div><div class="field-val${nullClass}">${display}</div></div>`;
+          });
+          html += '</div></div>';
+        });
+      } else {
+        html += '<div class="field-grid">';
+        Object.keys(sub).forEach(sk => {
+          const sv = sub[sk];
+          const display = sv === null || sv === undefined || sv === '' ? '—' : (typeof sv === 'object' ? JSON.stringify(sv) : String(sv));
+          const nullClass = (sv === null || sv === undefined || sv === '') ? ' null-val' : '';
+          html += `<div class="field-card"><div class="field-key">${sk}</div><div class="field-val${nullClass}">${display}</div></div>`;
+        });
+        html += '</div>';
+      }
+    });
+
+    if (idx < arr.length - 1) html += '<hr class="divider" />';
+  });
+
+  el.innerHTML = html;
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('friendly-view').style.display = v === 'friendly' ? 'block' : 'none';
+  document.getElementById('raw-view').style.display = v === 'raw' ? 'block' : 'none';
+  document.getElementById('btnFriendly').classList.toggle('active', v === 'friendly');
+  document.getElementById('btnRaw').classList.toggle('active', v === 'raw');
+}
+
+function setBadge(type, text) {
+  const b = document.getElementById('statusBadge');
+  b.style.display = 'inline-block';
+  b.className = 'status-badge badge-' + type;
+  b.textContent = text;
+}
+
+function copyJson() {
+  if (!lastData) return;
+  navigator.clipboard?.writeText(JSON.stringify(lastData, null, 2));
+  const btn = document.getElementById('btnCopy');
+  btn.textContent = 'Copied';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+// Auto-fetch on load
+window.addEventListener('load', () => doFetch());
+</script>
+</body>
+</html>
