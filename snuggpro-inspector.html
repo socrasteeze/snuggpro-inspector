@@ -27,10 +27,11 @@
   .nav-item.active .method { background: rgba(255,255,255,0.2); color: #fff; }
 
   /* Job ID bar */
-  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px; }
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px; flex-wrap: wrap; }
   .topbar label { font-size: 12px; color: #666; white-space: nowrap; }
-  .topbar input { border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 140px; }
+  .topbar input { border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 300px; }
   .topbar input:focus { outline: none; border-color: #1c6ef2; }
+  .topbar .job-hint { font-size: 11px; color: #aaa; white-space: nowrap; }
   .topbar .fetch-btn { background: #1c6ef2; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .topbar .fetch-btn:hover { background: #1558c0; }
   .topbar .fetch-btn:disabled { background: #a0b8e8; cursor: default; }
@@ -87,6 +88,16 @@
   table.measures td.copyable { cursor: pointer; }
   table.measures td.copyable:hover { background: #eef4ff; outline: 1px solid #cdddf5; }
   table.measures td.copied { background: #d6f0dd !important; outline: 1px solid #8fcea4; }
+  /* Calculated columns — tinted header to visually separate from Deemed group */
+  table.measures th.col-calc { background: #f0f4e8; }
+  table.measures th.col-calc:hover { background: #e4ebda; }
+  table.measures td.col-calc { background: #f8faf3; }
+  table.measures tr:hover td.col-calc { background: #edf2e0; }
+  /* Collapsible saved/deemed columns */
+  table.measures.hide-saved-deemed th.col-saved,
+  table.measures.hide-saved-deemed td.col-saved,
+  table.measures.hide-saved-deemed th.col-deemed,
+  table.measures.hide-saved-deemed td.col-deemed { display: none; }
 
   /* Combined summary */
   .combined-summary { padding: 14px; border-bottom: 1px solid #f0f0f0; background: #fcfcfb; }
@@ -186,8 +197,9 @@
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <label>Job ID</label>
-    <input type="text" id="jobId" value="332046" placeholder="e.g. 332046" />
+    <label>Job ID(s)</label>
+    <input type="text" id="jobId" value="332046" placeholder="e.g. 332046, 355981" />
+    <span class="job-hint">comma or space separated</span>
     <button class="fetch-btn" id="fetchBtn" onclick="doFetch()">Fetch</button>
     <span class="endpoint-display" id="endpointDisplay">/jobs/{jobId}</span>
     <span class="status-badge" id="statusBadge" style="display:none"></span>
@@ -221,17 +233,16 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 });
 
 function resolvedPath() {
-  const jobId = document.getElementById('jobId').value.trim();
+  const jobId = parseJobIds(document.getElementById('jobId').value)[0] || '';
   return currentPath.replace('{jobId}', jobId);
 }
 
 async function doFetch() {
-  const jobId = document.getElementById('jobId').value.trim();
+  const jobId = parseJobIds(document.getElementById('jobId').value)[0] || '';
 
   // Special reporting view
   if (currentPath === 'MEASURES') {
-    if (!jobId) { alert('Enter a Job ID.'); return; }
-    return fetchMeasures(jobId);
+    return fetchMeasures(document.getElementById('jobId').value);
   }
 
   if (!jobId && currentPath.includes('{jobId}')) {
@@ -278,25 +289,81 @@ async function doFetch() {
 let measureRows = [];
 let sortKey = null;
 let sortDir = 1;
+let currentTier = null; // 'deep' | 'plus' | 'review' | null
+let savedDeemedCollapsed = false;
 
 const MEASURE_COLS = [
-  { key: 'measure',     label: 'Measure',     num: false },
-  { key: 'source',      label: 'Src',         num: false },
-  { key: 'name',        label: 'Line Item',   num: false },
-  { key: 'code',        label: 'Code',        num: false },
-  { key: 'quantity',    label: 'Qty',         num: true  },
-  { key: 'unit',        label: 'Unit',        num: false },
-  { key: 'costPerUnit', label: 'Cost/Unit',   num: true  },
-  { key: 'lineCost',    label: 'Line Cost',   num: true  },
-  { key: 'savedKwh',    label: 'Saved kWh',   num: true  },
-  { key: 'savedTherms', label: 'Saved Therms',num: true  },
-  { key: 'savedMmbtu',  label: 'Saved MMBTU', num: true  },
-  { key: 'deemedKwh',   label: 'Deemed kWh',  num: true  },
-  { key: 'deemedTherms',label: 'Deemed Therms', num: true },
-  { key: 'deemedMmbtu', label: 'Deemed MMBTU', num: true }
+  { key: 'jobId',        label: 'Job',                num: false },
+  { key: 'measure',      label: 'Measure',            num: false },
+  { key: 'source',       label: 'Src',                num: false },
+  { key: 'name',         label: 'Line Item',          num: false },
+  { key: 'code',         label: 'Code',               num: false },
+  { key: 'quantity',     label: 'Qty',                num: true  },
+  { key: 'unit',         label: 'Unit',               num: false },
+  { key: 'costPerUnit',  label: 'Cost/Unit',          num: true  },
+  { key: 'lineCost',     label: 'Line Cost',          num: true  },
+  { key: 'savedKwh',     label: 'Saved kWh',          num: true,  group: 'saved'  },
+  { key: 'savedTherms',  label: 'Saved Therms',       num: true,  group: 'saved'  },
+  { key: 'savedMmbtu',   label: 'Saved MMBTU',        num: true,  group: 'saved'  },
+  { key: 'deemedKwh',    label: 'Deemed kWh',         num: true,  group: 'deemed' },
+  { key: 'deemedTherms', label: 'Deemed Therms',      num: true,  group: 'deemed' },
+  { key: 'deemedMmbtu',  label: 'Deemed MMBTU',       num: true,  group: 'deemed' },
+  { key: 'calcKwh',      label: 'Calculated kWh',     num: true  },
+  { key: 'calcTherms',   label: 'Calculated Therms',  num: true  },
+  { key: 'calcMmbtu',    label: 'Calculated MMBTU',   num: true  }
 ];
 
 function num(v) { return (v === null || v === undefined || v === '') ? null : Number(v); }
+
+// Derive savings % and program tier from rebatesIncentives metadata on lastData.
+// Returns { pct, tier, tierLabel, basisLabel, basisClass }
+function getReportingContext() {
+  let pct = null;
+  try {
+    const ri = (lastData.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
+    if (ri && ri.metadataJSON) {
+      const meta = JSON.parse(ri.metadataJSON);
+      const row = meta.find(m => m.key === 'combinedTotalEnergySavings');
+      if (row) pct = Number(row.value);
+    }
+  } catch(_) {}
+
+  let tier, tierLabel, basisLabel, basisClass;
+  if (pct == null) {
+    tier = 'review'; tierLabel = 'Unknown';
+    basisLabel = 'Unknown — no savings % available'; basisClass = 'basis-warn';
+  } else if (pct > 15) {
+    tier = 'deep'; tierLabel = 'Deep';
+    basisLabel = `Modeled (saved) · ${pct.toFixed(1)}% savings`; basisClass = 'basis-saved';
+  } else if (pct >= 5) {
+    tier = 'plus'; tierLabel = 'Pilot Plus';
+    basisLabel = `Deemed · ${pct.toFixed(1)}% savings`; basisClass = 'basis-deemed';
+  } else {
+    tier = 'review'; tierLabel = 'Review';
+    basisLabel = `Below 5% (${pct.toFixed(1)}%) — review`; basisClass = 'basis-warn';
+  }
+  return { pct, tier, tierLabel, basisLabel, basisClass };
+}
+
+// Compute per-row Calculated value (kWh/Therms/MMBTU) by tier:
+//   deep  → saved preferred, deemed fallback  (modeled savings + deemed where no modeled)
+//   plus  → deemed preferred, saved fallback  (deemed savings + saved where no deemed)
+//   review → deemed-priority default (keeps totals visible even when tier is uncertain)
+function calcRowEnergy(savedVal, deemedVal, tier) {
+  if (tier === 'deep') return savedVal != null ? savedVal : deemedVal;
+  // plus or review: deemed-priority
+  return deemedVal != null ? deemedVal : savedVal;
+}
+
+// Stamp calcKwh / calcTherms / calcMmbtu onto every row in measureRows.
+// Call this after measureRows is populated and currentTier is set.
+function stampCalcColumns() {
+  measureRows.forEach(r => {
+    r.calcKwh    = calcRowEnergy(r.savedKwh,    r.deemedKwh,    currentTier);
+    r.calcTherms = calcRowEnergy(r.savedTherms,  r.deemedTherms, currentTier);
+    r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,   r.deemedMmbtu,  currentTier);
+  });
+}
 
 function flattenMeasures(data) {
   const rows = [];
@@ -364,42 +431,76 @@ function flattenMeasures(data) {
   return rows;
 }
 
-async function fetchMeasures(jobId) {
-  const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
-  setBadge('loading', 'Fetching…');
+function parseJobIds(raw) {
+  return raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+}
+
+async function fetchMeasures(rawIds) {
+  const jobIds = parseJobIds(rawIds);
+  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+
+  const multi = jobIds.length > 1;
+  setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
   document.getElementById('resultWrap').style.display = 'block';
   document.getElementById('resultTitle').textContent = 'Measures Table';
-  document.getElementById('friendly-view').innerHTML = '<div style="padding:20px;color:#888">Loading all-data…</div>';
+  document.getElementById('friendly-view').innerHTML = `<div style="padding:20px;color:#888">Loading ${multi ? jobIds.join(', ') : jobIds[0]}…</div>`;
   document.getElementById('rawPre').textContent = '';
-  document.getElementById('endpointDisplay').textContent = `/jobs/${jobId}/all-data`;
+  document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
   setView('friendly');
 
-  try {
-    const res = await fetch(url);
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch(_) { data = null; }
+  const errors = [];
+  const allRows = [];
+  let combinedData = null; // lastData = last successful job's data (for summary pct)
 
-    if (!res.ok || !data) {
-      setBadge('err', `${res.status} ${res.statusText}`);
-      document.getElementById('friendly-view').innerHTML = `<div class="err-block">${res.status} — ${typeof data === 'string' ? data : text}</div>`;
-      return;
+  for (const jobId of jobIds) {
+    const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(_) { data = null; }
+      if (!res.ok || !data) {
+        errors.push(`Job ${jobId}: ${res.status} ${res.statusText}`);
+        continue;
+      }
+      combinedData = data;
+      // Derive tier per-job so multi-job rows are stamped independently
+      lastData = data;
+      const jobTier = getReportingContext().tier;
+      const rows = flattenMeasures(data);
+      rows.forEach(r => {
+        r.jobId = jobId;
+        r.calcKwh    = calcRowEnergy(r.savedKwh,   r.deemedKwh,    jobTier);
+        r.calcTherms = calcRowEnergy(r.savedTherms, r.deemedTherms, jobTier);
+        r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  jobTier);
+      });
+      allRows.push(...rows);
+    } catch(e) {
+      errors.push(`Job ${jobId}: network error`);
     }
-
-    lastData = data;
-    document.getElementById('rawPre').textContent = JSON.stringify(data, null, 2);
-    measureRows = flattenMeasures(data);
-    sortKey = null;
-    setBadge('ok', `${measureRows.length} line items`);
-    renderMeasures();
-  } catch(e) {
-    setBadge('err', 'Network error');
-    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
   }
+
+  if (allRows.length === 0) {
+    setBadge('err', 'No data');
+    document.getElementById('friendly-view').innerHTML =
+      `<div class="err-block">${errors.join('<br/>') || 'Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.'}</div>`;
+    return;
+  }
+
+  lastData = combinedData;
+  document.getElementById('rawPre').textContent = JSON.stringify(combinedData, null, 2);
+  measureRows = allRows;
+  // currentTier is only used by buildCombinedSummary for the single-job basis badge;
+  // for multi-job it reflects the last job fetched (used for display only, not row stamping)
+  currentTier = getReportingContext().tier;
+  // stampCalcColumns() already done per-job above; skip it here
+  sortKey = null;
+  const errNote = errors.length ? ` · ${errors.length} failed` : '';
+  setBadge(errors.length ? 'err' : 'ok', `${measureRows.length} line items${errNote}`);
+  renderMeasures();
 }
 
 function buildCombinedSummary() {
-  // Sum modeled (saved) and deemed separately from the flattened rows
   const s = { savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0 };
   measureRows.forEach(r => Object.keys(s).forEach(k => { if (typeof r[k] === 'number') s[k] += r[k]; }));
 
@@ -407,29 +508,24 @@ function buildCombinedSummary() {
   const combinedTherms = s.savedTherms + s.deemedTherms;
   const combinedMmbtu = s.savedMmbtu + s.deemedMmbtu;
 
-  // Pull overall % energy savings from rebatesIncentives metadata if present
-  let pct = null;
-  try {
-    const ri = (lastData.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
-    if (ri && ri.metadataJSON) {
-      const meta = JSON.parse(ri.metadataJSON);
-      const row = meta.find(m => m.key === 'combinedTotalEnergySavings');
-      if (row) pct = Number(row.value);
-    }
-  } catch(_) {}
-
-  // Determine reporting basis
-  let basis, basisClass;
-  if (pct == null)       { basis = 'Unknown — no savings % available'; basisClass = 'basis-warn'; }
-  else if (pct > 15)     { basis = `Modeled (saved) · ${pct.toFixed(1)}% savings`; basisClass = 'basis-saved'; }
-  else if (pct >= 5)     { basis = `Deemed · ${pct.toFixed(1)}% savings`; basisClass = 'basis-deemed'; }
-  else                   { basis = `Below 5% (${pct.toFixed(1)}%) — review`; basisClass = 'basis-warn'; }
+  const jobIds = [...new Set(measureRows.map(r => r.jobId).filter(Boolean))];
+  const multi = jobIds.length > 1;
 
   const card = (label, val, unit) =>
     `<div class="csum-card"><div class="csum-label">${label}</div><div class="csum-val">${val.toFixed(2)}<span class="csum-unit">${unit}</span></div></div>`;
 
   let h = '<div class="combined-summary">';
-  h += `<div class="csum-basis ${basisClass}">Reporting basis: <strong>${basis}</strong></div>`;
+
+  if (!multi) {
+    // Single job: show reporting basis + customer tier badges
+    const { tier, tierLabel, basisLabel, basisClass } = getReportingContext();
+    const tierBadgeClass = tier === 'deep' ? 'basis-saved' : tier === 'plus' ? 'basis-deemed' : 'basis-warn';
+    h += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">`;
+    h += `<div class="csum-basis ${basisClass}" style="margin-bottom:0">Reporting basis: <strong>${basisLabel}</strong></div>`;
+    h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Customer tier: <strong>${tierLabel}</strong></div>`;
+    h += `</div>`;
+  }
+
   h += '<div class="csum-grid">';
   h += card('Combined kWh', combinedKwh, 'kWh');
   h += card('Combined Therms', combinedTherms, 'thm');
@@ -453,21 +549,29 @@ function renderMeasures() {
   }
 
   // Totals
-  const tot = { quantity:0, lineCost:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0 };
+  const tot = { quantity:0, lineCost:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0, calcKwh:0, calcTherms:0, calcMmbtu:0 };
   rows.forEach(r => Object.keys(tot).forEach(k => { if (typeof r[k] === 'number') tot[k] += r[k]; }));
 
+  const jobSet = [...new Set(rows.map(r => r.jobId).filter(Boolean))];
+  const jobNote = jobSet.length > 1 ? ` · <strong>${jobSet.length}</strong> jobs` : '';
   let html = '<div class="measures-toolbar">';
-  html += `<span class="summary"><strong>${rows.length}</strong> line items · <span class="src-rec">REC</span> ${rows.filter(r=>r.source==='rec').length} · <span class="src-di">DI</span> ${rows.filter(r=>r.source==='DI').length}</span>`;
+  html += `<span class="summary"><strong>${rows.length}</strong> line items${jobNote} · <span class="src-rec">REC</span> ${rows.filter(r=>r.source==='rec').length} · <span class="src-di">DI</span> ${rows.filter(r=>r.source==='DI').length}</span>`;
   html += '<div class="spacer"></div>';
+  const collapseLabel = savedDeemedCollapsed ? 'Show Saved/Deemed' : 'Hide Saved/Deemed';
+  html += `<button class="tool-btn${savedDeemedCollapsed ? ' active' : ''}" onclick="toggleSavedDeemed()">${collapseLabel}</button>`;
   html += '<button class="csv-btn" onclick="exportMeasuresCsv()">Download CSV</button>';
   html += '</div>';
 
   html += buildCombinedSummary();
 
-  html += '<div class="table-scroll"><table class="measures"><thead><tr>';
+  const CALC_KEYS = new Set(['calcKwh', 'calcTherms', 'calcMmbtu']);
+
+  const tableClass = `measures${savedDeemedCollapsed ? ' hide-saved-deemed' : ''}`;
+  html += `<div class="table-scroll"><table class="${tableClass}"><thead><tr>`;
   MEASURE_COLS.forEach(c => {
     const arrow = sortKey === c.key ? `<span class="arrow">${sortDir === 1 ? '▲' : '▼'}</span>` : '';
-    html += `<th onclick="sortMeasures('${c.key}')">${c.label}${arrow}</th>`;
+    const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
+    html += `<th${grpCls ? ` class="${grpCls}"` : ''} onclick="sortMeasures('${c.key}')">${c.label}${arrow}</th>`;
   });
   html += '</tr></thead><tbody>';
 
@@ -475,19 +579,23 @@ function renderMeasures() {
     html += '<tr>';
     MEASURE_COLS.forEach(c => {
       let v = r[c.key];
+      const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
       if (c.key === 'source') {
-        html += `<td><span class="${v === 'rec' ? 'src-rec' : 'src-di'}">${v === 'rec' ? 'REC' : 'DI'}</span></td>`;
+        html += `<td${grpCls ? ` class="${grpCls}"` : ''}><span class="${v === 'rec' ? 'src-rec' : 'src-di'}">${v === 'rec' ? 'REC' : 'DI'}</span></td>`;
         return;
       }
       if (c.num) {
         const display = v == null ? '' : (Number.isInteger(v) ? v : v.toFixed(2));
         const neg = (typeof v === 'number' && v < 0) ? ' neg' : '';
         const copyAttr = v == null ? '' : ` data-copy="${v}" onclick="copyCell(this)" title="Click to copy"`;
-        html += `<td class="num${neg} copyable"${copyAttr}>${display}</td>`;
+        const cls = ['num', neg, grpCls, 'copyable'].filter(Boolean).join(' ');
+        html += `<td class="${cls}"${copyAttr}>${display}</td>`;
       } else {
-        const cls = c.key === 'measure' ? 'measure-cell ' : '';
+        const measureCls = c.key === 'measure' ? 'measure-cell' : '';
         const copyAttr = (v == null || v === '') ? '' : ` data-copy="${String(v).replace(/"/g,'&quot;')}" onclick="copyCell(this)" title="Click to copy"`;
-        html += `<td class="${cls}${(v==null||v==='')?'':'copyable'}"${copyAttr}>${v == null ? '' : v}</td>`;
+        const copyable = (v != null && v !== '') ? 'copyable' : '';
+        const cls = [measureCls, grpCls, copyable].filter(Boolean).join(' ');
+        html += `<td${cls ? ` class="${cls}"` : ''}${copyAttr}>${v == null ? '' : v}</td>`;
       }
     });
     html += '</tr>';
@@ -496,12 +604,14 @@ function renderMeasures() {
   // Totals row
   html += '<tr style="border-top:2px solid #ddd;font-weight:600;background:#fafafa">';
   MEASURE_COLS.forEach(c => {
+    const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
     if (c.key === 'measure') { html += '<td class="measure-cell">TOTAL</td>'; return; }
     if (c.num && tot[c.key] !== undefined) {
       const v = tot[c.key];
       const display = Number.isInteger(v) ? v : v.toFixed(2);
-      html += `<td class="num">${display}</td>`;
-    } else { html += '<td></td>'; }
+      const cls = ['num', grpCls].filter(Boolean).join(' ');
+      html += `<td class="${cls}">${display}</td>`;
+    } else { html += `<td${grpCls ? ` class="${grpCls}"` : ''}></td>`; }
   });
   html += '</tr>';
 
@@ -520,6 +630,11 @@ function copyCell(el) {
 function sortMeasures(key) {
   if (sortKey === key) sortDir = -sortDir;
   else { sortKey = key; sortDir = 1; }
+  renderMeasures();
+}
+
+function toggleSavedDeemed() {
+  savedDeemedCollapsed = !savedDeemedCollapsed;
   renderMeasures();
 }
 
