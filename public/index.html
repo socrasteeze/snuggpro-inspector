@@ -126,6 +126,7 @@
   <div class="sidebar-section">
     <div class="sidebar-section-label">Reporting</div>
     <button class="nav-item active" data-path="MEASURES" data-label="Measures Table"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Measures Table</button>
+    <button class="nav-item" data-path="USAGE" data-label="Usage / Billing"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Usage / Billing</button>
   </div>
 
   <div class="sidebar-section">
@@ -243,6 +244,9 @@ async function doFetch() {
   // Special reporting view
   if (currentPath === 'MEASURES') {
     return fetchMeasures(document.getElementById('jobId').value);
+  }
+  if (currentPath === 'USAGE') {
+    return fetchUsageBilling(document.getElementById('jobId').value);
   }
 
   if (!jobId && currentPath.includes('{jobId}')) {
@@ -660,6 +664,215 @@ function exportMeasuresCsv() {
   URL.revokeObjectURL(a.href);
 }
 // ---------- END MEASURES ----------
+
+// ---------- USAGE / BILLING VIEW ----------
+let usageRows = [];
+
+const USAGE_COLS = [
+  { key: 'jobId',      label: 'Job',         num: false },
+  { key: 'fuel',       label: 'Fuel',        num: false },
+  { key: 'startDate',  label: 'Bill Start',  num: false },
+  { key: 'endDate',    label: 'Bill End',    num: false },
+  { key: 'billedDays', label: 'Billed Days', num: true  },
+  { key: 'usage',      label: 'Usage',       num: true  },
+  { key: 'units',      label: 'Units',       num: false },
+  { key: 'mmbtu',      label: 'MMBTU',       num: true  }
+];
+
+// Standard energy-content conversions to MMBTU (1 MMBTU = 1,000,000 BTU).
+const KWH_TO_MMBTU = 3412.14 / 1e6; // 1 kWh = 3,412.14 BTU
+const THERM_TO_MMBTU = 0.1;         // 1 therm = 100,000 BTU
+
+function daysBetween(a, b) {
+  const ms = Date.parse(b) - Date.parse(a);
+  return Number.isNaN(ms) ? null : Math.round(ms / 86400000);
+}
+
+// Walk the flat, numbered bill series under data.utilities into one row per fuel
+// per billing period. Period N spans (prior read date -> end*Date N); usage =
+// end*Bill N. Period 1's start is start*Date1; later periods start at the prior
+// end date. mmbtu is computed from usage only when units are energy units.
+function flattenUsage(data) {
+  const u = data && data.utilities;
+  if (!u) return [];
+  const rows = [];
+
+  function series(fuel, startKey, datePrefix, billPrefix, units, toMmbtu) {
+    let prev = u[startKey];
+    for (let i = 1; i <= 13; i++) {
+      const end = u[datePrefix + i];
+      if (!end) break; // series ended
+      const usage = num(u[billPrefix + i]);
+      const mmbtu = (usage != null && toMmbtu != null) ? +(usage * toMmbtu).toFixed(6) : null;
+      rows.push({
+        fuel,
+        startDate: prev || '',
+        endDate: end,
+        billedDays: prev ? daysBetween(prev, end) : null,
+        usage,
+        units: units || '',
+        mmbtu
+      });
+      prev = end;
+    }
+  }
+
+  const eUnits = u.electricBillUnits || '';
+  series('Electric', 'startElectricDate1', 'endElectricDate', 'endElectricBill',
+         eUnits, eUnits === 'kWh' ? KWH_TO_MMBTU : null);
+
+  const fUnits = u.fuelBillUnits || '';
+  series('Gas', 'startFuelDate1', 'endFuelDate', 'endFuelBill',
+         fUnits, fUnits === 'Therms' ? THERM_TO_MMBTU : null);
+
+  return rows;
+}
+
+async function fetchUsageBilling(rawIds) {
+  const jobIds = parseJobIds(rawIds);
+  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+
+  const multi = jobIds.length > 1;
+  setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
+  document.getElementById('resultWrap').style.display = 'block';
+  document.getElementById('resultTitle').textContent = 'Usage / Billing';
+  document.getElementById('friendly-view').innerHTML = `<div style="padding:20px;color:#888">Loading ${multi ? jobIds.join(', ') : jobIds[0]}…</div>`;
+  document.getElementById('rawPre').textContent = '';
+  document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
+  setView('friendly');
+
+  const errors = [];
+  const allRows = [];
+  let lastUtilities = null;
+
+  for (const jobId of jobIds) {
+    const url = `/proxy/jobs/${jobId}/all-data`;
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(_) { data = null; }
+      if (!res.ok || !data) {
+        errors.push(`Job ${jobId}: ${res.status} ${res.statusText}`);
+        continue;
+      }
+      if (data.utilities) lastUtilities = data.utilities;
+      const rows = flattenUsage(data);
+      rows.forEach(r => { r.jobId = jobId; });
+      allRows.push(...rows);
+    } catch(e) {
+      errors.push(`Job ${jobId}: network error`);
+    }
+  }
+
+  if (allRows.length === 0) {
+    setBadge('err', 'No data');
+    document.getElementById('friendly-view').innerHTML =
+      `<div class="err-block">${errors.join('<br/>') || 'No periodic utility bills found for this job (it may use Simple/No-Bills entry).'}</div>`;
+    return;
+  }
+
+  document.getElementById('rawPre').textContent = JSON.stringify(lastUtilities, null, 2);
+  usageRows = allRows;
+  setBadge('ok', errors.length ? `Loaded · ${errors.length} error(s)` : `${allRows.length} bills`);
+  renderUsage();
+}
+
+function sortUsage(key) {
+  if (sortKey === key) sortDir = -sortDir;
+  else { sortKey = key; sortDir = 1; }
+  renderUsage();
+}
+
+function renderUsage() {
+  const rows = [...usageRows];
+  if (sortKey) {
+    const col = USAGE_COLS.find(c => c.key === sortKey);
+    if (col) {
+      rows.sort((a, b) => {
+        let x = a[sortKey], y = b[sortKey];
+        if (col.num) { x = x == null ? -Infinity : x; y = y == null ? -Infinity : y; return (x - y) * sortDir; }
+        x = (x || '').toString().toLowerCase(); y = (y || '').toString().toLowerCase();
+        return x < y ? -sortDir : x > y ? sortDir : 0;
+      });
+    }
+  }
+
+  // Totals: billedDays + mmbtu only (usage is mixed-unit across fuels).
+  const tot = { billedDays: 0, mmbtu: 0 };
+  rows.forEach(r => Object.keys(tot).forEach(k => { if (typeof r[k] === 'number') tot[k] += r[k]; }));
+
+  const jobSet = [...new Set(rows.map(r => r.jobId).filter(Boolean))];
+  const jobNote = jobSet.length > 1 ? ` · <strong>${jobSet.length}</strong> jobs` : '';
+  const elec = rows.filter(r => r.fuel === 'Electric').length;
+  const gas = rows.filter(r => r.fuel === 'Gas').length;
+
+  let html = '<div class="measures-toolbar">';
+  html += `<span class="summary"><strong>${rows.length}</strong> bills${jobNote} · Electric ${elec} · Gas ${gas} · usage total omitted (mixed units)</span>`;
+  html += '<div class="spacer"></div>';
+  html += '<button class="csv-btn" onclick="exportUsageCsv()">Download CSV</button>';
+  html += '</div>';
+
+  html += '<div class="table-scroll"><table class="measures"><thead><tr>';
+  USAGE_COLS.forEach(c => {
+    const arrow = sortKey === c.key ? `<span class="arrow">${sortDir === 1 ? '▲' : '▼'}</span>` : '';
+    html += `<th onclick="sortUsage('${c.key}')">${c.label}${arrow}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(r => {
+    html += '<tr>';
+    USAGE_COLS.forEach(c => {
+      const v = r[c.key];
+      if (c.num) {
+        let disp = '';
+        if (v != null) disp = c.key === 'billedDays' ? String(v) : c.key === 'mmbtu' ? v.toFixed(4) : (Number.isInteger(v) ? String(v) : v.toFixed(2));
+        const copyAttr = v == null ? '' : ` data-copy="${v}" onclick="copyCell(this)" title="Click to copy"`;
+        html += `<td class="num"${copyAttr}>${disp}</td>`;
+      } else {
+        const disp = v == null ? '' : String(v);
+        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${String(v).replace(/"/g, '&quot;')}" onclick="copyCell(this)"`;
+        html += `<td${copyAttr}>${disp}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '<tr style="border-top:2px solid #ddd;font-weight:600;background:#fafafa">';
+  USAGE_COLS.forEach(c => {
+    if (c.key === 'jobId') { html += '<td>TOTAL</td>'; return; }
+    if (c.key === 'billedDays') { html += `<td class="num">${tot.billedDays}</td>`; return; }
+    if (c.key === 'mmbtu') { html += `<td class="num">${tot.mmbtu.toFixed(4)}</td>`; return; }
+    html += '<td></td>';
+  });
+  html += '</tr>';
+
+  html += '</tbody></table></div>';
+  document.getElementById('friendly-view').innerHTML = html;
+}
+
+function exportUsageCsv() {
+  const jobId = document.getElementById('jobId').value.trim();
+  const headers = USAGE_COLS.map(c => c.label);
+  const lines = [headers.join(',')];
+  usageRows.forEach(r => {
+    const cells = USAGE_COLS.map(c => {
+      let v = r[c.key];
+      if (v === null || v === undefined) return '';
+      v = String(v);
+      if (v.includes(',') || v.includes('"') || v.includes('\n')) v = '"' + v.replace(/"/g, '""') + '"';
+      return v;
+    });
+    lines.push(cells.join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `usage_job_${jobId}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+// ---------- END USAGE / BILLING ----------
 
 function renderFriendly(data) {
   const el = document.getElementById('friendly-view');

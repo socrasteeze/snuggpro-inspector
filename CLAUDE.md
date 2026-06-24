@@ -65,7 +65,10 @@ Validation reference (job 332046, Bissonette): combined 967.82 kWh = 538.69 mode
 - Sorting is column-wise; the TOTAL row sums each numeric column independently.
 
 ## When adding endpoints
-Endpoints are listed as `<button class="nav-item" data-path="/jobs/{jobId}/...">` in the sidebar. `{jobId}` is substituted at fetch time. The special `data-path="MEASURES"` token routes to the reporting view instead of a raw GET. The full endpoint list came from `swagger.json` (kept in repo for reference).
+Endpoints are listed as `<button class="nav-item" data-path="/jobs/{jobId}/...">` in the sidebar. `{jobId}` is substituted at fetch time. The special `data-path="MEASURES"` and `data-path="USAGE"` tokens route to reporting views (`fetchMeasures` / `fetchUsageBilling`) instead of a raw GET. The full endpoint list came from `swagger.json` (kept in repo for reference).
+
+### The Usage / Billing view
+`flattenUsage(data)` reads `data.utilities` from `/jobs/{id}/all-data` into one row per fuel per billing period. The bill series is flat & numbered: electric uses `startElectricDate1` + `endElectricDate1..N` + `endElectricBill1..N` (units in `electricBillUnits`); gas uses the `…Fuel…` equivalents (`fuelBillUnits`). Period N spans (prior read date → `endDate N`). MMBTU is computed from usage (kWh×3412.14, therm×100000 BTU) only when units are energy units — blank for "Dollars" etc. Mirrors the Measures CSV/sort/copy conventions.
 
 ## Style / conventions
 - Vanilla JS only. No frameworks, no bundlers, no new runtime dependencies unless necessary.

@@ -94,6 +94,16 @@ Pulls `/jobs/{id}/all-data` and flattens line items into one sortable grid:
 - **Combined summary** — sums modeled + deemed into one reportable figure and flags the reporting basis from `combinedTotalEnergySavings`: over 15% defaults to modeled (saved); 5-15% to deemed; under 5% is flagged for review.
 - **Download CSV** — exports the full flattened set for import.
 
+### Usage / Billing (Reporting)
+
+Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into one row per fuel per billing period:
+
+- **Columns** — Job, Fuel (Electric/Gas), Bill Start, Bill End, Billed Days, Usage, Units, MMBTU.
+- **Billed Days** is computed from the two read dates; each period runs from the prior read date to the current one.
+- **MMBTU** is computed from usage (kWh × 3,412.14 BTU; therm × 100,000 BTU) and left blank when a bill is entered in dollars.
+- **Download CSV** — exports the full set (`usage_job_{id}.csv`) at full precision.
+- Supports multiple Job IDs at once; the TOTAL row sums billed days and MMBTU (usage is mixed-unit, so its total is omitted).
+
 ## Files
 
 - `worker.js` — Cloudflare Worker: email-code login + signing proxy + serves the UI (team deployment)
