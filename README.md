@@ -4,9 +4,61 @@ A local proxy and browser UI to pull SnuggPro job records by ID and inspect them
 
 ## Why a proxy?
 
-The SnuggPro API (`https://api.snuggpro.com`) does not send CORS headers, so a browser cannot call it directly. `proxy.js` runs locally, signs each request with your API keys (HMAC-SHA256), forwards it to SnuggPro, and returns the response to the browser with CORS enabled. Keys never leave your machine.
+The SnuggPro API (`https://api.snuggpro.com`) does not send CORS headers, so a browser cannot call it directly. A proxy signs each request with your API keys (HMAC-SHA256), forwards it to SnuggPro, and returns the response to the browser. There are two ways to run it:
 
-## Setup
+- **Hosted (for the team)** — a Cloudflare Worker (`worker.js`) serves the UI, gates access behind an email-code login, and signs requests. Teammates just open a link and sign in — no install. See [Team deployment](#team-deployment-cloudflare-worker).
+- **Local (for solo use)** — `proxy.js` runs on `localhost:3001` exactly as before. See [Local solo use](#local-solo-use-proxyjs).
+
+## Team deployment (Cloudflare Worker)
+
+Hosts the inspector for ~5 teammates with **email one-time-code** login. No Node, no install, and no Google account required for your team — they open a bookmarked `*.workers.dev` link, type their email, paste the 6-digit code they receive, and the tool runs in their browser. Free tier; no custom domain or DNS changes needed.
+
+### One-time setup (maintainer)
+
+1. **Email sender.** Create a free [SendGrid](https://sendgrid.com) account, do **Single Sender Verification** on one from-address (click the link they email you — no DNS needed), and create an API key.
+2. **Install Wrangler & log in:**
+   ```
+   npm install
+   npx wrangler login
+   ```
+3. **Set the allowlist + sender** in `wrangler.toml`:
+   ```toml
+   [vars]
+   ALLOWED_EMAILS = "alice@acme.com,bob@acme.com"   # who may sign in
+   FROM_EMAIL = "you@acme.com"                       # your verified sender
+   ```
+4. **Set the secrets** (never committed):
+   ```
+   npx wrangler secret put SNUGG_PUBLIC_KEY
+   npx wrangler secret put SNUGG_PRIVATE_KEY
+   npx wrangler secret put EMAIL_API_KEY      # the SendGrid key
+   npx wrangler secret put SESSION_SECRET     # a long random string
+   ```
+   Generate `SESSION_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+5. **Deploy** and share the link:
+   ```
+   npx wrangler deploy
+   ```
+   Send the team the resulting `https://snuggpro-inspector.<subdomain>.workers.dev` URL to bookmark.
+
+### Add or remove a teammate
+
+Edit the `ALLOWED_EMAILS` line in `wrangler.toml`, then:
+```
+npx wrangler deploy
+```
+Removal takes effect immediately (the allowlist is re-checked on every request).
+
+### Local testing of the Worker
+
+```
+cp .dev.vars.example .dev.vars   # fill in keys; gitignored
+npx wrangler dev                 # serves UI + login + proxy at http://localhost:8787
+```
+
+*Deliverability:* without domain authentication, login emails can occasionally land in spam — have teammates check once and mark "not spam." Adding SPF/DKIM **DNS records** at your registrar improves it (records only, no nameserver change) but is optional.
+
+## Local solo use (proxy.js)
 
 1. Install dependencies:
    ```
@@ -22,7 +74,7 @@ The SnuggPro API (`https://api.snuggpro.com`) does not send CORS headers, so a b
    npm start
    ```
    You should see `SnuggPro proxy running -> http://localhost:3001`.
-4. Open `snuggpro-inspector.html` in Chrome.
+4. Open `public/index.html` in Chrome — but note: the UI now uses a same-origin `/proxy` path, so opening it directly via `file://` won't reach `localhost:3001`. For local use, prefer the Worker dev server (`npx wrangler dev`, see above), which serves the UI and proxy together. `proxy.js` remains as an offline fallback.
 
 Leave the proxy terminal running while you use the inspector.
 
@@ -44,10 +96,13 @@ Pulls `/jobs/{id}/all-data` and flattens line items into one sortable grid:
 
 ## Files
 
-- `proxy.js` — local signing proxy
-- `snuggpro-inspector.html` — browser UI (no build step, no framework)
-- `.env` — your API keys (gitignored, never committed)
-- `.env.example` — template
+- `worker.js` — Cloudflare Worker: email-code login + signing proxy + serves the UI (team deployment)
+- `wrangler.toml` — Worker config (allowlist, sender, assets binding)
+- `public/index.html` — browser UI (no build step, no framework)
+- `proxy.js` — local signing proxy (solo/offline fallback)
+- `.env` — your API keys for `proxy.js` (gitignored, never committed)
+- `.env.example` — template for `proxy.js`
+- `.dev.vars` / `.dev.vars.example` — secrets for local `wrangler dev` (gitignored)
 - `swagger.json` — SnuggPro API spec for reference (optional)
 
 ## Notes

@@ -1,0 +1,17 @@
+# Copy to .dev.vars (gitignored) for local `wrangler dev`.
+# In production these go in via `wrangler secret put` instead — never commit real values.
+
+# SnuggPro API credentials (same values as the old .env)
+SNUGG_PUBLIC_KEY=your-snuggpro-public-key
+SNUGG_PRIVATE_KEY=your-snuggpro-private-key
+
+# Random string used to sign session/OTP cookies. Generate one, e.g.:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=replace-with-a-long-random-string
+
+# Email provider API key (SendGrid by default)
+EMAIL_API_KEY=your-sendgrid-api-key
+
+# Vars also live in wrangler.toml for production; set them here for local runs too.
+ALLOWED_EMAILS=you@example.com
+FROM_EMAIL=you@yourcompany.com

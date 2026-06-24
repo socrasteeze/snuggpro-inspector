@@ -1,0 +1,8 @@
+node_modules/
+
+# Secrets — never commit
+.env
+.dev.vars
+
+# Wrangler build/cache
+.wrangler/

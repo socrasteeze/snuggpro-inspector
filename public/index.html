@@ -120,7 +120,7 @@
 <nav class="sidebar">
   <div class="sidebar-header">
     <h1>SnuggPro Inspector</h1>
-    <p>localhost:3001 proxy</p>
+    <p><a href="/auth/logout" style="color:#888;text-decoration:none">Sign out</a></p>
   </div>
 
   <div class="sidebar-section">
@@ -251,7 +251,7 @@ async function doFetch() {
   }
 
   const path = resolvedPath();
-  const url = `http://localhost:3001/proxy${path}`;
+  const url = `/proxy${path}`;
   const label = document.querySelector('.nav-item.active')?.dataset.label || path;
 
   setBadge('loading', 'Fetching…');
@@ -281,7 +281,7 @@ async function doFetch() {
     renderFriendly(data);
   } catch(e) {
     setBadge('err', 'Network error');
-    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach the proxy. Try reloading; if it persists, you may need to sign in again.</div>`;
   }
 }
 
@@ -453,7 +453,7 @@ async function fetchMeasures(rawIds) {
   let combinedData = null; // lastData = last successful job's data (for summary pct)
 
   for (const jobId of jobIds) {
-    const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
+    const url = `/proxy/jobs/${jobId}/all-data`;
     try {
       const res = await fetch(url);
       const text = await res.text();
@@ -483,7 +483,7 @@ async function fetchMeasures(rawIds) {
   if (allRows.length === 0) {
     setBadge('err', 'No data');
     document.getElementById('friendly-view').innerHTML =
-      `<div class="err-block">${errors.join('<br/>') || 'Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.'}</div>`;
+      `<div class="err-block">${errors.join('<br/>') || 'Could not reach the proxy. Try reloading; if it persists, you may need to sign in again.'}</div>`;
     return;
   }
 

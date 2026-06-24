@@ -4,29 +4,47 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-A local tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. Two pieces:
+A tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. The signing proxy exists because SnuggPro's API has no CORS support. Two ways to run it:
 
-1. `proxy.js` — a Node HTTP server on `localhost:3001` that signs requests (HMAC-SHA256) with API keys from `.env` and forwards them to `https://api.snuggpro.com`, adding CORS headers so the browser can read responses. SnuggPro's API has no CORS support, which is the entire reason this proxy exists.
-2. `snuggpro-inspector.html` — a single-file browser UI (vanilla JS, no framework, no build step) that calls the proxy and renders job data, including a flattened Measures Table for reporting and CSV export.
+1. **Hosted (team) — `worker.js` + `wrangler.toml`.** A Cloudflare Worker that (a) gates access behind an email one-time-code login restricted to an `ALLOWED_EMAILS` allowlist, (b) serves the UI from `public/` as a static asset, and (c) signs (HMAC-SHA256) and forwards `/proxy/*` to `https://api.snuggpro.com`. Same origin as the UI, so no CORS dance. Secrets (`SNUGG_*`, `SESSION_SECRET`, `EMAIL_API_KEY`) live as Wrangler secrets. This is how the team uses it — `npx wrangler deploy`.
+2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` that signs requests with API keys from `.env` and forwards them, adding CORS headers. Offline/solo fallback only.
 
-There is no build, bundler, or test runner. Edit files and reload the browser.
+The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path and renders job data, including a flattened Measures Table for reporting and CSV export.
+
+There is no build, bundler, or test runner. Edit files; for local runs use `npx wrangler dev` (serves UI + login + proxy at `localhost:8787`) since the same-origin `/proxy` path means opening the HTML via `file://` no longer reaches a proxy.
 
 ## Running it
 
+**Team (hosted):**
 ```
-npm install        # installs dotenv (only dependency)
-cp .env.example .env   # then fill in real keys
-npm start          # node proxy.js
+npm install
+npx wrangler login
+# set ALLOWED_EMAILS + FROM_EMAIL in wrangler.toml, then:
+npx wrangler secret put SNUGG_PUBLIC_KEY    # + SNUGG_PRIVATE_KEY, EMAIL_API_KEY, SESSION_SECRET
+npx wrangler deploy
 ```
-Open `snuggpro-inspector.html` in Chrome. Proxy must stay running.
+See README "Team deployment" for the full walkthrough (SendGrid sender, adding teammates).
+
+**Local (solo, offline):**
+```
+npm install
+cp .env.example .env   # fill in real keys
+npx wrangler dev       # serves UI + login + proxy at http://localhost:8787
+```
+(`npm start` still runs the bare `proxy.js` on :3001, but the UI's same-origin `/proxy` path means you should drive local testing through `wrangler dev`.)
 
 ## Architecture and key invariants
 
 ### Auth
 - Signature = `HMAC-SHA256(privateKey, x-date-iso-timestamp)`, hex digest.
 - Header: `Authorization: Credential={public},Signature={sig}` plus `X-Date: {same timestamp}`.
-- The timestamp used in the signature MUST be the same one sent in `X-Date`. Do not regenerate it between signing and sending.
-- Keys live only in `.env`. Never hardcode them in `proxy.js` or the HTML. Never commit `.env`.
+- The timestamp used in the signature MUST be the same one sent in `X-Date`. Do not regenerate it between signing and sending. (`worker.js` reuses one `date` value; `proxy.js` likewise.)
+- Keys live only in `.env` (proxy) or Wrangler secrets (worker). Never hardcode them in `proxy.js`, `worker.js`, or the HTML. Never commit `.env` or `.dev.vars`.
+
+### Worker login (email one-time code)
+- Login is gated by `ALLOWED_EMAILS` (comma-separated, in `wrangler.toml`). The allowlist is re-checked on **every** request, so removing an email + redeploy revokes access immediately.
+- Session and OTP are **stateless signed cookies**: `base64url(payloadJSON) + "." + hmacHex(base64url(payloadJSON), SESSION_SECRET)`, verified with a constant-time compare and an `exp` check. There is no datastore; the OTP is bound to the same browser via its cookie.
+- The 6-digit code is never stored in plaintext — the OTP cookie holds `hmacHex(email:code, SESSION_SECRET)`, compared on verify.
 
 ### The Measures Table (most important business logic)
 Lives in `snuggpro-inspector.html`, in `flattenMeasures(data)` and `buildCombinedSummary()`. It reads `/jobs/{id}/all-data`.
