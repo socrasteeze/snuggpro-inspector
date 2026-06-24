@@ -78,6 +78,36 @@ npx wrangler deploy
 ```
 Removal takes effect immediately (the allowlist is re-checked on every request).
 
+## Pending checks (my verification list)
+
+These couldn't be tested without real keys / a live deploy. The **data checks are
+identical** on both branches — only **how you launch** differs.
+
+### How to launch
+- **Hosted (`claude/team-api-caller-auth-2hjsiq`):** after `wrangler deploy`, open the
+  `*.workers.dev` URL → sign in with an allowlisted email + the mailed code.
+- **Local (`main`):** `npm start` (runs `proxy.js` on :3001) → open
+  `snuggpro-inspector.html` in Chrome. No deploy, login, or email involved.
+
+### Checks for BOTH branches
+- [ ] **Measures Table**, job **332046 (Bissonette)** → combined **967.82 kWh**
+      (538.69 modeled + 429.13 deemed).
+- [ ] **Usage / Billing**, job **332046** → electric + gas rows with Bill Start / Bill End /
+      Billed Days / Usage / Units / MMBTU populated.
+- [ ] **MMBTU spot-check** → a ~1000 kWh period ≈ 3.412 MMBTU; a 50-therm period = 5.0 MMBTU.
+      Spot-check one Billed Days against its two dates.
+- [ ] **Download CSV** (`usage_job_{id}.csv`) → opens with full-precision values + correct headers.
+- [ ] **Multi-job** → enter two Job IDs → Job column separates them.
+- [ ] **Edge case to decide:** if a job uses "Simple" / "No Bills" entry (no per-period bills),
+      the Usage view shows "no periodic utility bills found." Decide whether you want that
+      case handled (would be a follow-up).
+
+### Hosted-only checks (`claude/team-api-caller-auth-2hjsiq`)
+- [ ] `wrangler deploy` succeeds and prints the `*.workers.dev` URL.
+- [ ] Allowlisted email → receives code → signs in. **Non-listed email is blocked.**
+- [ ] Login email actually arrives (check spam the first time).
+- [ ] Rotate the SnuggPro key after confirming everything works (Step 9).
+
 ## Troubleshooting
 - **Login email didn't arrive** → check spam; confirm `FROM_EMAIL` matches the verified
   SendGrid sender exactly; confirm `EMAIL_API_KEY` is set (`npx wrangler secret list`).
