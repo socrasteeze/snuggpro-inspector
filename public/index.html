@@ -230,6 +230,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.add('active');
     currentPath = btn.dataset.path;
     document.getElementById('endpointDisplay').textContent = currentPath;
+    // Auto-fetch on tab change when a Job ID is already entered (skip the nag otherwise).
+    if (parseJobIds(document.getElementById('jobId').value).length > 0) doFetch();
   });
 });
 
