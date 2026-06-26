@@ -112,6 +112,7 @@
   .csum-unit { font-size: 12px; font-weight: 400; color: #999; margin-left: 4px; }
   .csum-breakdown { font-size: 11px; color: #888; margin-top: 8px; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -127,6 +128,7 @@
     <div class="sidebar-section-label">Reporting</div>
     <button class="nav-item active" data-path="MEASURES" data-label="Measures Table"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Measures Table</button>
     <button class="nav-item" data-path="USAGE" data-label="Usage / Billing"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Usage / Billing</button>
+    <button class="nav-item" onclick="exportXlsx()" data-label="Export XLSX"><span class="method" style="background:#217346;color:#fff">XLS</span>Export XLSX</button>
   </div>
 
   <div class="sidebar-section">
@@ -980,6 +982,153 @@ function copyJson() {
 
 // Auto-fetch on load
 window.addEventListener('load', () => doFetch());
+
+// ---------- XLSX EXPORT ----------
+// Uses JSZip to patch the template ZIP directly, avoiding SheetJS's table round-trip
+// limitation (SheetJS CE drops xl/tables/*.xml files on write).
+
+function colIdxToLetter(idx) {
+  if (idx < 26) return String.fromCharCode(65 + idx);
+  return String.fromCharCode(64 + Math.floor(idx / 26)) + String.fromCharCode(65 + (idx % 26));
+}
+
+function xmlEsc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildRowXml(rowNum, values) {
+  let xml = `<row r="${rowNum}" spans="1:${values.length}">`;
+  values.forEach((val, i) => {
+    if (val == null || val === '') return;
+    const ref = colIdxToLetter(i) + rowNum;
+    if (typeof val === 'number') {
+      xml += `<c r="${ref}"><v>${val}</v></c>`;
+    } else {
+      xml += `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
+    }
+  });
+  return xml + '</row>';
+}
+
+// Keeps template header row (row 1) as-is; replaces all data rows with new ones.
+function patchSheetXml(sheetXml, dataRows, numCols) {
+  const headerMatch = sheetXml.match(/<row r="1"[\s\S]*?<\/row>/);
+  const headerRow = headerMatch ? headerMatch[0] : '';
+  const dataXml = dataRows.map((vals, i) => buildRowXml(i + 2, vals)).join('');
+  const newSheetData = `<sheetData>${headerRow}${dataXml}</sheetData>`;
+  const lastRow = dataRows.length + 1;
+  const lastCol = colIdxToLetter(numCols - 1);
+  return sheetXml
+    .replace(/<sheetData>[\s\S]*?<\/sheetData>/, newSheetData)
+    .replace(/(<dimension ref=")[^"]*(")/,  `$1A1:${lastCol}${lastRow}$2`);
+}
+
+// Extends both the table ref and its autoFilter ref to cover all data rows.
+function patchTableXml(tableXml, newRef) {
+  return tableXml
+    .replace(/(<table\b[^>]* ref=")[^"]*(")/,       `$1${newRef}$2`)
+    .replace(/(<autoFilter\b[^>]* ref=")[^"]*(")/,  `$1${newRef}$2`);
+}
+
+async function exportXlsx() {
+  const rawIds = document.getElementById('jobId').value.trim();
+  const jobIds = parseJobIds(rawIds);
+  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+
+  setBadge('loading', 'Building XLSX…');
+
+  let tplBuf;
+  try {
+    const tplRes = await fetch('http://localhost:3001/template');
+    if (!tplRes.ok) { alert('template.xlsx not found — make sure it is in the project root and the proxy is running.'); setBadge('err', 'No template'); return; }
+    tplBuf = await tplRes.arrayBuffer();
+  } catch(e) { alert('Could not load template. Is the proxy running?'); setBadge('err', 'Proxy error'); return; }
+
+  const mainOut = [], measuresOut = [], elecOut = [], gasOut = [], errors = [];
+
+  for (const jobId of jobIds) {
+    try {
+      const res = await fetch(`http://localhost:3001/proxy/jobs/${jobId}/all-data`);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(_) { data = null; }
+      if (!res.ok || !data) { errors.push(`Job ${jobId}: ${res.status}`); continue; }
+
+      mainOut.push([jobId]);
+
+      lastData = data;
+      const tier = getReportingContext().tier;
+
+      // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
+      // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
+      // Deemed kWh,Deemed Therms,Deemed MMBTU,SavedkWh,SavedTherms,SavedMBTUs
+      flattenMeasures(data).forEach(r => {
+        measuresOut.push([
+          jobId, r.measure, r.source, r.name, r.code,
+          r.quantity, r.unit, r.costPerUnit, r.lineCost,
+          r.savedKwh, r.savedTherms, r.savedMmbtu,
+          r.deemedKwh, r.deemedTherms, r.deemedMmbtu,
+          calcRowEnergy(r.savedKwh,    r.deemedKwh,    tier),
+          calcRowEnergy(r.savedTherms, r.deemedTherms, tier),
+          calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  tier)
+        ]);
+      });
+
+      // Column order: table3 = AuditId,Fuel,ElectricBillStartDate,ElectricBillEndDate,Billed Days,ElectricMonthkWhUsage,Units,MMBTU
+      // Column order: table4 = AuditId,Fuel,GasBillStartDate,Gas End,GasBilledDays,GasMonthThermsUsage,Units,MMBTU
+      flattenUsage(data).forEach(r => {
+        if (r.fuel === 'Electric') {
+          elecOut.push([jobId, 'Electric', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
+        } else if (r.fuel === 'Gas') {
+          gasOut.push([jobId, 'Gas', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
+        }
+      });
+    } catch(e) {
+      errors.push(`Job ${jobId}: network error`);
+    }
+  }
+
+  // Open template ZIP and patch sheets + table refs in-place
+  const zip = await JSZip.loadAsync(tplBuf);
+
+  async function patchSheet(sheetPath, tablePath, dataRows, numCols, lastColLetter) {
+    const sXml = await zip.file(sheetPath).async('string');
+    zip.file(sheetPath, patchSheetXml(sXml, dataRows, numCols));
+    const tXml = await zip.file(tablePath).async('string');
+    const newRef = `A1:${lastColLetter}${dataRows.length + 1}`;
+    zip.file(tablePath, patchTableXml(tXml, newRef));
+  }
+
+  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     1,  'A');
+  await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18, 'R');
+  await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8,  'H');
+  await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8,  'H');
+
+  const wbBytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+  const blob = new Blob([wbBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const idStr   = jobIds.length === 1 ? jobIds[0] : `${jobIds.length}jobs`;
+  const filename = `export_${idStr}_${dateStr}.xlsx`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  try {
+    await fetch(`http://localhost:3001/exports?filename=${encodeURIComponent(filename)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: blob
+    });
+  } catch(_) {}
+
+  const note = errors.length ? ` · ${errors.length} error(s)` : '';
+  setBadge('ok', `Exported ${filename}${note}`);
+}
+// ---------- END XLSX EXPORT ----------
 </script>
 </body>
 </html>
