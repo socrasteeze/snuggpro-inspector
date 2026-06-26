@@ -18,6 +18,8 @@
   .sidebar-header { padding: 16px; border-bottom: 1px solid #2e2e2e; }
   .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; }
   .sidebar-header p { font-size: 11px; color: #888; margin-top: 2px; }
+  .program-select { width: 100%; margin-top: 8px; background: #2a2a2a; color: #d4d4d4; border: 1px solid #3a3a3a; border-radius: 5px; padding: 5px 8px; font-size: 11px; cursor: pointer; }
+  .program-select:focus { outline: none; border-color: #1c6ef2; }
   .sidebar-section { padding: 8px 0; border-bottom: 1px solid #2e2e2e; }
   .sidebar-section-label { font-size: 10px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 16px 4px; }
   .nav-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 6px 16px; font-size: 12px; color: #b0b0b0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -122,6 +124,12 @@
   <div class="sidebar-header">
     <h1>SnuggPro Inspector</h1>
     <p>localhost:3001 proxy</p>
+    <select class="program-select" id="programSelect" onchange="onProgramChange(this.value)">
+      <option value="region1">Region 1 – CA LIWP Farmworkers</option>
+      <option value="region2">Region 2 – CA LIWP Farmworkers</option>
+      <option value="sdge">SDGE – Whole Home Program</option>
+      <option value="sce">SCE/SCG ESA Whole Home</option>
+    </select>
   </div>
 
   <div class="sidebar-section">
@@ -225,6 +233,15 @@
 let currentPath = '/jobs/{jobId}';
 let lastData = null;
 let currentView = 'friendly';
+let selectedProgram = 'region1';
+
+function onProgramChange(val) {
+  selectedProgram = val;
+}
+
+function proxyUrl(apiPath) {
+  return `http://localhost:3001/proxy${apiPath}?program=${selectedProgram}`;
+}
 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -259,7 +276,7 @@ async function doFetch() {
   }
 
   const path = resolvedPath();
-  const url = `http://localhost:3001/proxy${path}`;
+  const url = proxyUrl(path);
   const label = document.querySelector('.nav-item.active')?.dataset.label || path;
 
   setBadge('loading', 'Fetching…');
@@ -461,7 +478,7 @@ async function fetchMeasures(rawIds) {
   let combinedData = null; // lastData = last successful job's data (for summary pct)
 
   for (const jobId of jobIds) {
-    const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
+    const url = proxyUrl(`/jobs/${jobId}/all-data`);
     try {
       const res = await fetch(url);
       const text = await res.text();
@@ -765,7 +782,7 @@ async function fetchUsageBilling(rawIds) {
   let lastUtilities = null;
 
   for (const jobId of jobIds) {
-    const url = `http://localhost:3001/proxy/jobs/${jobId}/all-data`;
+    const url = proxyUrl(`/jobs/${jobId}/all-data`);
     try {
       const res = await fetch(url);
       const text = await res.text();
@@ -1048,7 +1065,7 @@ async function exportXlsx() {
 
   for (const jobId of jobIds) {
     try {
-      const res = await fetch(`http://localhost:3001/proxy/jobs/${jobId}/all-data`);
+      const res = await fetch(proxyUrl(`/jobs/${jobId}/all-data`));
       const text = await res.text();
       let data;
       try { data = JSON.parse(text); } catch(_) { data = null; }

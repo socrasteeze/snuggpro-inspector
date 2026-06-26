@@ -13,25 +13,35 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3001;
-const PUBLIC_KEY = process.env.SNUGG_PUBLIC_KEY;
-const PRIVATE_KEY = process.env.SNUGG_PRIVATE_KEY;
 const EXPORTS_DIR = path.join(__dirname, 'exports');
 const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
 
-if (!PUBLIC_KEY || !PRIVATE_KEY) {
-  console.error('Missing SNUGG_PUBLIC_KEY or SNUGG_PRIVATE_KEY.');
-  console.error('Copy .env.example to .env and fill in your keys.');
+const PROGRAMS = {
+  region1: { name: 'Region 1 – CA LIWP Farmworkers', pub: process.env.REGION1_PUBLIC_KEY, priv: process.env.REGION1_PRIVATE_KEY },
+  region2: { name: 'Region 2 – CA LIWP Farmworkers', pub: process.env.REGION2_PUBLIC_KEY, priv: process.env.REGION2_PRIVATE_KEY },
+  sdge:    { name: 'SDGE – Whole Home Program',       pub: process.env.SDGE_PUBLIC_KEY,    priv: process.env.SDGE_PRIVATE_KEY },
+  sce:     { name: 'SCE/SCG ESA Whole Home',          pub: process.env.SCE_PUBLIC_KEY,     priv: process.env.SCE_PRIVATE_KEY },
+};
+const DEFAULT_PROGRAM = 'region1';
+
+const missingKeys = Object.entries(PROGRAMS).filter(([, p]) => !p.pub || !p.priv).map(([k]) => k);
+if (missingKeys.length === Object.keys(PROGRAMS).length) {
+  console.error('No program keys found in .env. Copy .env.example to .env and fill in your keys.');
   process.exit(1);
+}
+if (missingKeys.length) {
+  console.warn(`Warning: missing keys for programs: ${missingKeys.join(', ')}`);
 }
 
 if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR);
 
-function signRequest() {
+function signRequest(programKey) {
+  const prog = PROGRAMS[programKey] || PROGRAMS[DEFAULT_PROGRAM];
   const date = new Date().toISOString();
-  const hmac = crypto.createHmac('sha256', PRIVATE_KEY);
+  const hmac = crypto.createHmac('sha256', prog.priv);
   hmac.update(date);
   const sig = hmac.digest('hex');
-  return { date, auth: `Credential=${PUBLIC_KEY},Signature=${sig}` };
+  return { date, auth: `Credential=${prog.pub},Signature=${sig}` };
 }
 
 const server = http.createServer((req, res) => {
@@ -40,6 +50,14 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+  // Return program list for the UI switcher
+  if (req.url === '/programs' && req.method === 'GET') {
+    const list = Object.entries(PROGRAMS).map(([key, p]) => ({ key, name: p.name, active: !!(p.pub && p.priv) }));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(list));
+    return;
+  }
 
   // Serve template.xlsx to the browser
   if (req.url === '/template' && req.method === 'GET') {
@@ -71,8 +89,10 @@ const server = http.createServer((req, res) => {
 
   if (req.method !== 'GET') { res.writeHead(405); res.end('Method not allowed'); return; }
 
-  const proxyPath = req.url.replace(/^\/proxy/, '') || '/';
-  const { date, auth } = signRequest();
+  const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+  const programKey = reqUrl.searchParams.get('program') || DEFAULT_PROGRAM;
+  const proxyPath = reqUrl.pathname.replace(/^\/proxy/, '') + (reqUrl.search.replace(/[?&]program=[^&]*/g, '').replace(/^&/, '?') || '');
+  const { date, auth } = signRequest(programKey);
 
   console.log(`-> GET ${proxyPath}`);
 
