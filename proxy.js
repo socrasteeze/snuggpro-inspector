@@ -126,7 +126,22 @@ const server = http.createServer((req, res) => {
   upstream.end();
 });
 
-server.listen(PORT, () => {
-  console.log(`SnuggPro proxy running -> http://localhost:${PORT}`);
-  console.log(`Test: http://localhost:${PORT}/proxy/jobs/332046`);
+function listen(port) {
+  server.listen(port, () => {
+    console.log(`SnuggPro proxy running -> http://localhost:${port}`);
+    console.log(`Test: http://localhost:${port}/proxy/jobs/332046`);
+    if (port !== Number(PORT)) console.log(`(port ${PORT} was in use, bound to ${port} instead)`);
+  });
+}
+
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    const next = server.address() ? server.address().port + 1 : Number(PORT) + 1;
+    console.warn(`Port ${e.port ?? PORT} in use, trying ${next}…`);
+    server.close(() => listen(next));
+  } else {
+    throw e;
+  }
 });
+
+listen(Number(PORT));

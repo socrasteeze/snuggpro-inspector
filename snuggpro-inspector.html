@@ -234,13 +234,24 @@ let currentPath = '/jobs/{jobId}';
 let lastData = null;
 let currentView = 'friendly';
 let selectedProgram = 'region1';
+let proxyPort = 3001;
 
 function onProgramChange(val) {
   selectedProgram = val;
 }
 
 function proxyUrl(apiPath) {
-  return `http://localhost:3001/proxy${apiPath}?program=${selectedProgram}`;
+  return `http://localhost:${proxyPort}/proxy${apiPath}?program=${selectedProgram}`;
+}
+
+async function detectProxyPort(base = 3001, tries = 5) {
+  for (let p = base; p < base + tries; p++) {
+    try {
+      const r = await fetch(`http://localhost:${p}/programs`, { signal: AbortSignal.timeout(800) });
+      if (r.ok) { proxyPort = p; return p; }
+    } catch(_) {}
+  }
+  return null;
 }
 
 document.querySelectorAll('.nav-item').forEach(btn => {
@@ -306,7 +317,7 @@ async function doFetch() {
     renderFriendly(data);
   } catch(e) {
     setBadge('err', 'Network error');
-    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:${proxyPort}.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
   }
 }
 
@@ -508,7 +519,7 @@ async function fetchMeasures(rawIds) {
   if (allRows.length === 0) {
     setBadge('err', 'No data');
     document.getElementById('friendly-view').innerHTML =
-      `<div class="err-block">${errors.join('<br/>') || 'Could not reach proxy at localhost:3001.<br/>Make sure <code>node proxy.js</code> is running.'}</div>`;
+      `<div class="err-block">${errors.join('<br/>') || `Could not reach proxy at localhost:${proxyPort}.<br/>Make sure <code>node proxy.js</code> is running.`}</div>`;
     return;
   }
 
@@ -998,7 +1009,12 @@ function copyJson() {
 }
 
 // Auto-fetch on load
-window.addEventListener('load', () => doFetch());
+window.addEventListener('load', async () => {
+  const port = await detectProxyPort();
+  const el = document.querySelector('.sidebar-header p');
+  if (el) el.textContent = port ? `localhost:${port} proxy` : 'proxy not found';
+  doFetch();
+});
 
 // ---------- XLSX EXPORT ----------
 // Uses JSZip to patch the template ZIP directly, avoiding SheetJS's table round-trip
