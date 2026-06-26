@@ -580,7 +580,7 @@ function buildCombinedSummary() {
   let h = '<div class="combined-summary">';
 
   if (!multi) {
-    const stageId = lastData?.stageId;
+    const stageId = lastData?.job?.stageId ?? lastData?.stageId;
     const stageLabel = stageId != null ? (STAGE_LABELS[stageId] ?? `Stage ${stageId}`) : null;
     const farmworker = isFarmworkerProgram();
     const { tier, tierLabel, basisLabel, basisClass } = getReportingContext();
