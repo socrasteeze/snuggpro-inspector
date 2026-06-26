@@ -95,6 +95,10 @@
   table.measures th.col-calc:hover { background: #e4ebda; }
   table.measures td.col-calc { background: #f8faf3; }
   table.measures tr:hover td.col-calc { background: #edf2e0; }
+  table.measures th.col-fw { background: #eef3fb; }
+  table.measures th.col-fw:hover { background: #dce8f7; }
+  table.measures td.col-fw { background: #f5f8fd; }
+  table.measures tr:hover td.col-fw { background: #e8f0fa; }
   /* Collapsible saved/deemed columns */
   table.measures.hide-saved-deemed th.col-saved,
   table.measures.hide-saved-deemed td.col-saved,
@@ -329,25 +333,32 @@ let currentTier = null; // 'deep' | 'plus' | 'review' | null
 let savedDeemedCollapsed = false;
 
 const MEASURE_COLS = [
-  { key: 'jobId',        label: 'Job',                num: false },
-  { key: 'measure',      label: 'Measure',            num: false },
-  { key: 'source',       label: 'Src',                num: false },
-  { key: 'name',         label: 'Line Item',          num: false },
-  { key: 'code',         label: 'Code',               num: false },
-  { key: 'quantity',     label: 'Qty',                num: true  },
-  { key: 'unit',         label: 'Unit',               num: false },
-  { key: 'costPerUnit',  label: 'Cost/Unit',          num: true  },
-  { key: 'lineCost',     label: 'Line Cost',          num: true  },
-  { key: 'savedKwh',     label: 'Saved kWh',          num: true,  group: 'saved'  },
-  { key: 'savedTherms',  label: 'Saved Therms',       num: true,  group: 'saved'  },
-  { key: 'savedMmbtu',   label: 'Saved MMBTU',        num: true,  group: 'saved'  },
-  { key: 'deemedKwh',    label: 'Deemed kWh',         num: true,  group: 'deemed' },
-  { key: 'deemedTherms', label: 'Deemed Therms',      num: true,  group: 'deemed' },
-  { key: 'deemedMmbtu',  label: 'Deemed MMBTU',       num: true,  group: 'deemed' },
-  { key: 'calcKwh',      label: 'Calculated kWh',     num: true  },
-  { key: 'calcTherms',   label: 'Calculated Therms',  num: true  },
-  { key: 'calcMmbtu',    label: 'Calculated MMBTU',   num: true  }
+  { key: 'jobId',            label: 'Job',                num: false },
+  { key: 'measure',          label: 'Measure',            num: false },
+  { key: 'source',           label: 'Src',                num: false },
+  { key: 'name',             label: 'Line Item',          num: false },
+  { key: 'code',             label: 'Code',               num: false },
+  { key: 'quantity',         label: 'Qty',                num: true  },
+  { key: 'unit',             label: 'Unit',               num: false },
+  { key: 'costPerUnit',      label: 'Cost/Unit',          num: true  },
+  { key: 'lineCost',         label: 'Line Cost',          num: true  },
+  { key: 'yrSavings',        label: 'Yr. Savings',        num: true,  group: 'fw', farmworker: true },
+  { key: 'lifetimeSavings',  label: 'Savings',            num: true,  group: 'fw', farmworker: true },
+  { key: 'sir',              label: 'SIR',                num: true,  group: 'fw', farmworker: true },
+  { key: 'savedKwh',         label: 'Saved kWh',          num: true,  group: 'saved'  },
+  { key: 'savedTherms',      label: 'Saved Therms',       num: true,  group: 'saved'  },
+  { key: 'savedMmbtu',       label: 'Saved MMBTU',        num: true,  group: 'saved'  },
+  { key: 'deemedKwh',        label: 'Deemed kWh',         num: true,  group: 'deemed' },
+  { key: 'deemedTherms',     label: 'Deemed Therms',      num: true,  group: 'deemed' },
+  { key: 'deemedMmbtu',      label: 'Deemed MMBTU',       num: true,  group: 'deemed' },
+  { key: 'calcKwh',          label: 'Calculated kWh',     num: true  },
+  { key: 'calcTherms',       label: 'Calculated Therms',  num: true  },
+  { key: 'calcMmbtu',        label: 'Calculated MMBTU',   num: true  }
 ];
+
+function activeMeasureCols() {
+  return isFarmworkerProgram() ? MEASURE_COLS : MEASURE_COLS.filter(c => !c.farmworker);
+}
 
 function num(v) { return (v === null || v === undefined || v === '') ? null : Number(v); }
 
@@ -416,12 +427,18 @@ function flattenMeasures(data) {
 
   // Recommendations → only active/selected (status "1"); one row per detailedCost line item
   (data.recommendations || []).filter(rec => rec.status == '1').forEach(rec => {
+    const recSir      = num(rec.sir);
+    const recCost     = num(rec.cost);
+    const recSavings  = num(rec.savings);
     const base = {
       measure: rec.title,
       savedKwh: num(rec.savedKwh),
       savedTherms: num(rec.savedTherms),
       savedMmbtu: num(rec.savedMbtu),
-      deemedKwh: null, deemedTherms: null, deemedMmbtu: null
+      deemedKwh: null, deemedTherms: null, deemedMmbtu: null,
+      yrSavings:       recSavings,
+      lifetimeSavings: (recSir != null && recCost != null) ? +(recSir * recCost).toFixed(2) : null,
+      sir:             recSir
     };
     const costs = rec.detailedCosts || [];
     if (costs.length === 0) {
@@ -601,7 +618,7 @@ function renderMeasures() {
   }
 
   // Totals
-  const tot = { quantity:0, lineCost:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0, calcKwh:0, calcTherms:0, calcMmbtu:0 };
+  const tot = { quantity:0, lineCost:0, yrSavings:0, lifetimeSavings:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0, calcKwh:0, calcTherms:0, calcMmbtu:0 };
   rows.forEach(r => Object.keys(tot).forEach(k => { if (typeof r[k] === 'number') tot[k] += r[k]; }));
 
   const jobSet = [...new Set(rows.map(r => r.jobId).filter(Boolean))];
@@ -617,21 +634,23 @@ function renderMeasures() {
   html += buildCombinedSummary();
 
   const CALC_KEYS = new Set(['calcKwh', 'calcTherms', 'calcMmbtu']);
+  const colGroup = c => CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'fw' ? 'col-fw' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
+  const cols = activeMeasureCols();
 
   const tableClass = `measures${savedDeemedCollapsed ? ' hide-saved-deemed' : ''}`;
   html += `<div class="table-scroll"><table class="${tableClass}"><thead><tr>`;
-  MEASURE_COLS.forEach(c => {
+  cols.forEach(c => {
     const arrow = sortKey === c.key ? `<span class="arrow">${sortDir === 1 ? '▲' : '▼'}</span>` : '';
-    const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
+    const grpCls = colGroup(c);
     html += `<th${grpCls ? ` class="${grpCls}"` : ''} onclick="sortMeasures('${c.key}')">${c.label}${arrow}</th>`;
   });
   html += '</tr></thead><tbody>';
 
   rows.forEach(r => {
     html += '<tr>';
-    MEASURE_COLS.forEach(c => {
+    cols.forEach(c => {
       let v = r[c.key];
-      const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
+      const grpCls = colGroup(c);
       if (c.key === 'source') {
         html += `<td${grpCls ? ` class="${grpCls}"` : ''}><span class="${v === 'rec' ? 'src-rec' : 'src-di'}">${v === 'rec' ? 'REC' : 'DI'}</span></td>`;
         return;
@@ -653,11 +672,12 @@ function renderMeasures() {
     html += '</tr>';
   });
 
-  // Totals row
+  // Totals row (SIR is a ratio — not summed)
   html += '<tr style="border-top:2px solid #ddd;font-weight:600;background:#fafafa">';
-  MEASURE_COLS.forEach(c => {
-    const grpCls = CALC_KEYS.has(c.key) ? 'col-calc' : c.group === 'saved' ? 'col-saved' : c.group === 'deemed' ? 'col-deemed' : '';
+  cols.forEach(c => {
+    const grpCls = colGroup(c);
     if (c.key === 'measure') { html += '<td class="measure-cell">TOTAL</td>'; return; }
+    if (c.key === 'sir') { html += `<td class="${['num', grpCls].filter(Boolean).join(' ')}"></td>`; return; }
     if (c.num && tot[c.key] !== undefined) {
       const v = tot[c.key];
       const display = Number.isInteger(v) ? v : v.toFixed(2);
@@ -692,10 +712,11 @@ function toggleSavedDeemed() {
 
 function exportMeasuresCsv() {
   const jobId = document.getElementById('jobId').value.trim();
-  const headers = MEASURE_COLS.map(c => c.label);
+  const cols = activeMeasureCols();
+  const headers = cols.map(c => c.label);
   const lines = [headers.join(',')];
   measureRows.forEach(r => {
-    const cells = MEASURE_COLS.map(c => {
+    const cells = cols.map(c => {
       let v = r[c.key];
       if (v === null || v === undefined) return '';
       v = String(v);
