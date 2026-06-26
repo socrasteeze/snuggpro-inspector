@@ -351,6 +351,16 @@ const MEASURE_COLS = [
 
 function num(v) { return (v === null || v === undefined || v === '') ? null : Number(v); }
 
+const STAGE_LABELS = {
+  1:'Lead', 2:'Audit', 3:'Bid Proposed', 4:'Bid Approved',
+  5:'Retrofit In Progress', 6:'Retrofit Complete', 7:'QA',
+  8:'Uncategorized', 9:'Archived Won', 10:'Archived Lost'
+};
+
+function isFarmworkerProgram() {
+  return selectedProgram === 'region1' || selectedProgram === 'region2';
+}
+
 // Derive savings % and program tier from rebatesIncentives metadata on lastData.
 // Returns { pct, tier, tierLabel, basisLabel, basisClass }
 function getReportingContext() {
@@ -553,12 +563,18 @@ function buildCombinedSummary() {
   let h = '<div class="combined-summary">';
 
   if (!multi) {
-    // Single job: show reporting basis + customer tier badges
+    const stageId = lastData?.stageId;
+    const stageLabel = stageId != null ? (STAGE_LABELS[stageId] ?? `Stage ${stageId}`) : null;
+    const farmworker = isFarmworkerProgram();
     const { tier, tierLabel, basisLabel, basisClass } = getReportingContext();
     const tierBadgeClass = tier === 'deep' ? 'basis-saved' : tier === 'plus' ? 'basis-deemed' : 'basis-warn';
+
     h += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">`;
-    h += `<div class="csum-basis ${basisClass}" style="margin-bottom:0">Reporting basis: <strong>${basisLabel}</strong></div>`;
-    h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Customer tier: <strong>${tierLabel}</strong></div>`;
+    if (stageLabel) h += `<div class="csum-basis" style="margin-bottom:0;background:#f0f0f0;color:#444">Stage: <strong>${stageLabel}</strong></div>`;
+    if (!farmworker) {
+      h += `<div class="csum-basis ${basisClass}" style="margin-bottom:0">Reporting basis: <strong>${basisLabel}</strong></div>`;
+      h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Customer tier: <strong>${tierLabel}</strong></div>`;
+    }
     h += `</div>`;
   }
 

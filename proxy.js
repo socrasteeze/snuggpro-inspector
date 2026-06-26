@@ -32,6 +32,11 @@ if (missingKeys.length === Object.keys(PROGRAMS).length) {
 if (missingKeys.length) {
   console.warn(`Warning: missing keys for programs: ${missingKeys.join(', ')}`);
 }
+console.log('Loaded programs:');
+Object.entries(PROGRAMS).forEach(([key, p]) => {
+  const status = (p.pub && p.priv) ? `pub=${p.pub.slice(0,8)}…` : 'MISSING KEYS';
+  console.log(`  ${key}: ${status}`);
+});
 
 if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR);
 
@@ -94,7 +99,8 @@ const server = http.createServer((req, res) => {
   const proxyPath = reqUrl.pathname.replace(/^\/proxy/, '') + (reqUrl.search.replace(/[?&]program=[^&]*/g, '').replace(/^&/, '?') || '');
   const { date, auth } = signRequest(programKey);
 
-  console.log(`-> GET ${proxyPath}`);
+  const prog = PROGRAMS[programKey] || PROGRAMS[DEFAULT_PROGRAM];
+  console.log(`-> GET ${proxyPath} [${programKey}] pub=${prog?.pub?.slice(0,8) ?? 'MISSING'}…`);
 
   const options = {
     hostname: 'api.snuggpro.com',
