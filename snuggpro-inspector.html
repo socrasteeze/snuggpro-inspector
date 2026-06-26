@@ -360,7 +360,7 @@ function activeMeasureCols() {
   return isFarmworkerProgram() ? MEASURE_COLS : MEASURE_COLS.filter(c => !c.farmworker);
 }
 
-function num(v) { return (v === null || v === undefined || v === '') ? null : Number(v); }
+function num(v) { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; }
 
 const STAGE_LABELS = {
   1:'Lead', 2:'Audit', 3:'Bid Proposed', 4:'Bid Approved',
