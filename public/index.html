@@ -699,8 +699,17 @@ function toggleSavedDeemed() {
   renderMeasures();
 }
 
+// Build a clean, comma/space-free filename token from the Job ID input.
+//   1 job  -> job_332046      2-3 jobs -> jobs_332046-355981      4+ -> 5jobs
+function jobFileTag() {
+  const ids = parseJobIds(document.getElementById('jobId').value).map(s => s.replace(/[^\w.-]/g, ''));
+  if (ids.length === 0) return 'export';
+  if (ids.length === 1) return `job_${ids[0]}`;
+  if (ids.length <= 3) return `jobs_${ids.join('-')}`;
+  return `${ids.length}jobs`;
+}
+
 function exportMeasuresCsv() {
-  const jobId = document.getElementById('jobId').value.trim();
   const cols = activeMeasureCols();
   const headers = cols.map(c => c.label);
   const lines = [headers.join(',')];
@@ -717,7 +726,7 @@ function exportMeasuresCsv() {
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `measures_job_${jobId}.csv`;
+  a.download = `measures_${jobFileTag()}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -925,7 +934,6 @@ function renderUsage() {
 }
 
 function exportUsageCsv() {
-  const jobId = document.getElementById('jobId').value.trim();
   const headers = USAGE_COLS.map(c => c.label);
   const lines = [headers.join(',')];
   usageRows.forEach(r => {
@@ -941,7 +949,7 @@ function exportUsageCsv() {
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `usage_job_${jobId}.csv`;
+  a.download = `usage_${jobFileTag()}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
