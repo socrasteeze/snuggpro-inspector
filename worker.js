@@ -6,13 +6,26 @@
 //   3. Signs (HMAC-SHA256) and forwards /proxy/* to api.snuggpro.com — the
 //      same job proxy.js does locally, ported to Web Crypto.
 //
-// Secrets (wrangler secret put): SNUGG_PUBLIC_KEY, SNUGG_PRIVATE_KEY,
-//   SESSION_SECRET, EMAIL_API_KEY.
+// Secrets (wrangler secret put):
+//   REGION1_PUBLIC_KEY  REGION1_PRIVATE_KEY
+//   REGION2_PUBLIC_KEY  REGION2_PRIVATE_KEY
+//   SDGE_PUBLIC_KEY     SDGE_PRIVATE_KEY
+//   SCE_PUBLIC_KEY      SCE_PRIVATE_KEY
+//   SESSION_SECRET  EMAIL_API_KEY
 // Vars (wrangler.toml): ALLOWED_EMAILS (comma-separated), FROM_EMAIL.
 //
 // Nothing here is hardcoded — all keys come from env. Never commit real secrets.
 
 const SNUGG_HOST = 'api.snuggpro.com';
+
+// Program registry — mirrors proxy.js on the local side.
+const PROGRAMS = (env) => ({
+  region1: { name: 'Region 1 – CA LIWP Farmworkers', pub: env.REGION1_PUBLIC_KEY, priv: env.REGION1_PRIVATE_KEY },
+  region2: { name: 'Region 2 – CA LIWP Farmworkers', pub: env.REGION2_PUBLIC_KEY, priv: env.REGION2_PRIVATE_KEY },
+  sdge:    { name: 'SDGE – Whole Home Program',       pub: env.SDGE_PUBLIC_KEY,    priv: env.SDGE_PRIVATE_KEY },
+  sce:     { name: 'SCE/SCG ESA Whole Home',          pub: env.SCE_PUBLIC_KEY,     priv: env.SCE_PRIVATE_KEY },
+});
+const DEFAULT_PROGRAM = 'region1';
 const OTP_TTL_MS = 10 * 60 * 1000;          // code valid 10 minutes
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // session valid 30 days
 
@@ -166,18 +179,40 @@ async function formField(request, name) {
   return typeof v === 'string' ? v.trim() : '';
 }
 
+// ---------- /programs: list available programs ----------
+
+function handlePrograms(env) {
+  const progs = PROGRAMS(env);
+  const list = Object.entries(progs).map(([key, p]) => ({
+    key, name: p.name, active: !!(p.pub && p.priv),
+  }));
+  return new Response(JSON.stringify(list), { headers: { 'Content-Type': 'application/json' } });
+}
+
 // ---------- /proxy: sign and forward to SnuggPro ----------
 
 async function handleProxy(request, url, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
 
-  const path = url.pathname.replace(/^\/proxy/, '') + url.search || '/';
-  const date = new Date().toISOString();                 // SAME value for signature and X-Date
-  const sig = await hmacHex(date, env.SNUGG_PRIVATE_KEY);
-  const auth = `Credential=${env.SNUGG_PUBLIC_KEY},Signature=${sig}`;
+  // Strip ?program= from the forwarded path; keep any other query params.
+  const programKey = url.searchParams.get('program') || DEFAULT_PROGRAM;
+  const cleanSearch = url.search.replace(/[?&]program=[^&]*/g, '').replace(/^&/, '?') || '';
+  const path = url.pathname.replace(/^\/proxy/, '') + cleanSearch || '/';
 
-  console.log(`-> GET ${path}`);
+  const progs = PROGRAMS(env);
+  const prog = progs[programKey] || progs[DEFAULT_PROGRAM];
+  if (!prog.pub || !prog.priv) {
+    return new Response(JSON.stringify({ error: `No keys configured for program: ${programKey}` }), {
+      status: 503, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const date = new Date().toISOString();                 // SAME value for signature and X-Date
+  const sig = await hmacHex(date, prog.priv);
+  const auth = `Credential=${prog.pub},Signature=${sig}`;
+
+  console.log(`-> GET ${path} [${programKey}]`);
   try {
     const upstream = await fetch(`https://${SNUGG_HOST}${path}`, {
       headers: { 'Authorization': auth, 'X-Date': date, 'Content-Type': 'application/json' },
@@ -255,6 +290,8 @@ export default {
     if (!session) {
       return new Response(null, { status: 302, headers: { 'Location': '/auth/login' } });
     }
+
+    if (p === '/programs') return handlePrograms(env);
 
     if (p.startsWith('/proxy')) return handleProxy(request, url, env);
 

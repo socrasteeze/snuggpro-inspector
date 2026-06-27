@@ -4,7 +4,11 @@
 # Local:   npx wrangler dev      (reads secrets/vars from .dev.vars)
 #
 # Secrets are NOT stored here — set them with `wrangler secret put`:
-#   SNUGG_PUBLIC_KEY  SNUGG_PRIVATE_KEY  SESSION_SECRET  EMAIL_API_KEY
+#   REGION1_PUBLIC_KEY  REGION1_PRIVATE_KEY
+#   REGION2_PUBLIC_KEY  REGION2_PRIVATE_KEY
+#   SDGE_PUBLIC_KEY     SDGE_PRIVATE_KEY
+#   SCE_PUBLIC_KEY      SCE_PRIVATE_KEY
+#   SESSION_SECRET  EMAIL_API_KEY
 
 name = "snuggpro-inspector"
 main = "worker.js"
