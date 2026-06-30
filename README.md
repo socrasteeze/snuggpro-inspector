@@ -27,14 +27,17 @@ Hosts the inspector for ~5 teammates with **email one-time-code** login. No Node
    ALLOWED_EMAILS = "alice@acme.com,bob@acme.com"   # who may sign in
    FROM_EMAIL = "you@acme.com"                       # your verified sender
    ```
-4. **Set the secrets** (never committed):
+4. **Set the secrets** (never committed) — a public + private key pair per program, plus session/email:
    ```
-   npx wrangler secret put SNUGG_PUBLIC_KEY
-   npx wrangler secret put SNUGG_PRIVATE_KEY
-   npx wrangler secret put EMAIL_API_KEY      # the SendGrid key
-   npx wrangler secret put SESSION_SECRET     # a long random string
+   npx wrangler secret put REGION1_PUBLIC_KEY   # then REGION1_PRIVATE_KEY
+   npx wrangler secret put REGION2_PUBLIC_KEY   # then REGION2_PRIVATE_KEY
+   npx wrangler secret put SDGE_PUBLIC_KEY      # then SDGE_PRIVATE_KEY
+   npx wrangler secret put SCE_PUBLIC_KEY       # then SCE_PRIVATE_KEY
+   npx wrangler secret put EMAIL_API_KEY        # the SendGrid key
+   npx wrangler secret put SESSION_SECRET       # a long random string
    ```
    Generate `SESSION_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   (Only the programs you use need keys; the switcher greys out any with missing keys.)
 5. **Deploy** and share the link:
    ```
    npx wrangler deploy

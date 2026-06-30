@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 A tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. The signing proxy exists because SnuggPro's API has no CORS support. Two ways to run it:
 
-1. **Hosted (team) — `worker.js` + `wrangler.toml`.** A Cloudflare Worker that (a) gates access behind an email one-time-code login restricted to an `ALLOWED_EMAILS` allowlist, (b) serves the UI from `public/` as a static asset, and (c) signs (HMAC-SHA256) and forwards `/proxy/*` to `https://api.snuggpro.com`. Same origin as the UI, so no CORS dance. Secrets (`SNUGG_*`, `SESSION_SECRET`, `EMAIL_API_KEY`) live as Wrangler secrets. This is how the team uses it — `npx wrangler deploy`.
+1. **Hosted (team) — `worker.js` + `wrangler.toml`.** A Cloudflare Worker that (a) gates access behind an email one-time-code login restricted to an `ALLOWED_EMAILS` allowlist, (b) serves the UI from `public/` as a static asset, and (c) signs (HMAC-SHA256) and forwards `/proxy/*` to `https://api.snuggpro.com`. Same origin as the UI, so no CORS dance. Secrets (a public/private key pair per program — `REGION1_*`, `REGION2_*`, `SDGE_*`, `SCE_*` — plus `SESSION_SECRET`, `EMAIL_API_KEY`) live as Wrangler secrets. This is how the team uses it — `npx wrangler deploy`.
 2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` that signs requests with API keys from `.env` and forwards them, adding CORS headers. Offline/solo fallback only.
 
 The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path and renders job data, including a flattened Measures Table for reporting and CSV export.
@@ -20,7 +20,7 @@ There is no build, bundler, or test runner. Edit files; for local runs use `npx 
 npm install
 npx wrangler login
 # set ALLOWED_EMAILS + FROM_EMAIL in wrangler.toml, then:
-npx wrangler secret put SNUGG_PUBLIC_KEY    # + SNUGG_PRIVATE_KEY, EMAIL_API_KEY, SESSION_SECRET
+npx wrangler secret put REGION1_PUBLIC_KEY  # + each program's *_PUBLIC/_PRIVATE pair, EMAIL_API_KEY, SESSION_SECRET
 npx wrangler deploy
 ```
 See README "Team deployment" for the full walkthrough (SendGrid sender, adding teammates).

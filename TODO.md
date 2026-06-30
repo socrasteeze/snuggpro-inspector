@@ -35,13 +35,27 @@ FROM_EMAIL = "the-address-you-verified-in-sendgrid@company.com"
 - `ALLOWED_EMAILS` = who may log in (any email type works)
 - `FROM_EMAIL` = the exact address verified in Step 2
 
-## Step 5 — Store the 4 secrets (run one at a time, paste when prompted)
+## Step 5 — Store the secrets (run one at a time, paste when prompted)
+One public + private key pair per SnuggPro program, plus the session and email secrets:
 ```bash
-npx wrangler secret put SNUGG_PUBLIC_KEY     # paste your public key
-npx wrangler secret put SNUGG_PRIVATE_KEY    # paste your private key
+# Region 1 — CA LIWP Farmworkers
+npx wrangler secret put REGION1_PUBLIC_KEY
+npx wrangler secret put REGION1_PRIVATE_KEY
+# Region 2 — CA LIWP Farmworkers
+npx wrangler secret put REGION2_PUBLIC_KEY
+npx wrangler secret put REGION2_PRIVATE_KEY
+# SDGE — Whole Home Program
+npx wrangler secret put SDGE_PUBLIC_KEY
+npx wrangler secret put SDGE_PRIVATE_KEY
+# SCE/SCG ESA Whole Home
+npx wrangler secret put SCE_PUBLIC_KEY
+npx wrangler secret put SCE_PRIVATE_KEY
+# Session signing + email sender
 npx wrangler secret put SESSION_SECRET       # paste a long random string (generate below)
 npx wrangler secret put EMAIL_API_KEY        # paste your SendGrid key
 ```
+You only need the pairs for programs you actually use — the switcher greys out any program
+whose keys are missing.
 Generate the `SESSION_SECRET`:
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -62,10 +76,10 @@ Copy the printed `https://snuggpro-inspector.<something>.workers.dev` URL.
 ## Step 8 — Share with your team
 Send them the URL: open it, type your email, paste the mailed code. That's it.
 
-## Step 9 — Rotate the key (housekeeping)
-Because the SnuggPro keys passed through chat in plaintext, regenerate the API key
-(Settings → App Integrations), then re-run the two `wrangler secret put` commands with
-the new values and `npx wrangler deploy` again.
+## Step 9 — Rotate keys (housekeeping)
+If any SnuggPro key was shared in plaintext, regenerate it (Settings → App Integrations),
+then re-run the matching `wrangler secret put` command(s) with the new value and
+`npx wrangler deploy` again.
 
 ---
 
@@ -109,6 +123,7 @@ identical** on both branches — only **how you launch** differs.
 ## Troubleshooting
 - **Login email didn't arrive** → check spam; confirm `FROM_EMAIL` matches the verified
   SendGrid sender exactly; confirm `EMAIL_API_KEY` is set (`npx wrangler secret list`).
-- **Job fetch fails** → re-check `SNUGG_PUBLIC_KEY` / `SNUGG_PRIVATE_KEY`.
+- **Job fetch fails / "No keys configured for program"** → confirm that program's
+  `*_PUBLIC_KEY` / `*_PRIVATE_KEY` pair is set (`npx wrangler secret list`).
 - **Local testing** → `cp .dev.vars.example .dev.vars`, fill it in, `npx wrangler dev`
   (serves UI + login + proxy at http://localhost:8787).
