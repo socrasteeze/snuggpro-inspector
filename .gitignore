@@ -1,0 +1,12 @@
+node_modules/
+
+# Secrets — never commit
+.env
+.dev.vars
+
+# Wrangler build/cache (from local worker testing)
+.wrangler/
+
+# Generated exports (keep the folder, not its output)
+exports/*
+!exports/.gitkeep
