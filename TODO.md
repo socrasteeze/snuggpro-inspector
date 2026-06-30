@@ -3,6 +3,9 @@
 Step-by-step guide to put the inspector online for the team (email-code login,
 free Cloudflare Worker, no domain or nameserver changes). Do these in order.
 
+> For the full explanation (how it works, configuration model, troubleshooting, security),
+> see **[SETUP.md](SETUP.md)**. This file is the quick run sheet + verification checklist.
+
 > Secrets are never stored in files — they go into Cloudflare via `wrangler secret put`.
 > Don't commit real keys.
 

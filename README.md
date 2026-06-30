@@ -11,55 +11,20 @@ The SnuggPro API (`https://api.snuggpro.com`) does not send CORS headers, so a b
 
 ## Team deployment (Cloudflare Worker)
 
-Hosts the inspector for ~5 teammates with **email one-time-code** login. No Node, no install, and no Google account required for your team — they open a bookmarked `*.workers.dev` link, type their email, paste the 6-digit code they receive, and the tool runs in their browser. Free tier; no custom domain or DNS changes needed.
+Hosts the inspector for your team with **email one-time-code** login. No Node, no install, and no Google account required for your team — they open a bookmarked `*.workers.dev` link, type their email, paste the 6-digit code they receive, and the tool runs in their browser. Free tier; no custom domain or DNS changes needed.
 
-### One-time setup (maintainer)
+**→ Full step-by-step guide: [SETUP.md](SETUP.md)** (prerequisites, configure, deploy, manage). The short version:
 
-1. **Email sender.** Create a free [SendGrid](https://sendgrid.com) account, do **Single Sender Verification** on one from-address (click the link they email you — no DNS needed), and create an API key.
-2. **Install Wrangler & log in:**
-   ```
-   npm install
-   npx wrangler login
-   ```
-3. **Set the allowlist + sender** in `wrangler.toml`:
-   ```toml
-   [vars]
-   ALLOWED_EMAILS = "alice@acme.com,bob@acme.com"   # who may sign in
-   FROM_EMAIL = "you@acme.com"                       # your verified sender
-   ```
-4. **Set the secrets** (never committed) — a public + private key pair per program, plus session/email:
-   ```
-   npx wrangler secret put REGION1_PUBLIC_KEY   # then REGION1_PRIVATE_KEY
-   npx wrangler secret put REGION2_PUBLIC_KEY   # then REGION2_PRIVATE_KEY
-   npx wrangler secret put SDGE_PUBLIC_KEY      # then SDGE_PRIVATE_KEY
-   npx wrangler secret put SCE_PUBLIC_KEY       # then SCE_PRIVATE_KEY
-   npx wrangler secret put EMAIL_API_KEY        # the SendGrid key
-   npx wrangler secret put SESSION_SECRET       # a long random string
-   ```
-   Generate `SESSION_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-   (Only the programs you use need keys; the switcher greys out any with missing keys.)
-5. **Deploy** and share the link:
-   ```
-   npx wrangler deploy
-   ```
-   Send the team the resulting `https://snuggpro-inspector.<subdomain>.workers.dev` URL to bookmark.
-
-### Add or remove a teammate
-
-Edit the `ALLOWED_EMAILS` line in `wrangler.toml`, then:
-```
-npx wrangler deploy
-```
-Removal takes effect immediately (the allowlist is re-checked on every request).
-
-### Local testing of the Worker
-
-```
-cp .dev.vars.example .dev.vars   # fill in keys; gitignored
-npx wrangler dev                 # serves UI + login + proxy at http://localhost:8787
+```bash
+npm install
+npx wrangler login
+# set ALLOWED_EMAILS + FROM_EMAIL in wrangler.toml, then add the program key pairs + session/email:
+npx wrangler secret put REGION1_PUBLIC_KEY    # + REGION1_PRIVATE_KEY, REGION2_*, SDGE_*, SCE_*
+npx wrangler secret put SESSION_SECRET        # + EMAIL_API_KEY
+npx wrangler deploy                           # prints your https://…workers.dev URL — share it
 ```
 
-*Deliverability:* without domain authentication, login emails can occasionally land in spam — have teammates check once and mark "not spam." Adding SPF/DKIM **DNS records** at your registrar improves it (records only, no nameserver change) but is optional.
+To add/remove a teammate later: edit `ALLOWED_EMAILS` in `wrangler.toml` and `npx wrangler deploy` (effective immediately). See [SETUP.md](SETUP.md) for the rest, including local testing with `npx wrangler dev`.
 
 ## Local solo use (proxy.js)
 
