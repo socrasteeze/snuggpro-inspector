@@ -1244,7 +1244,9 @@ async function exportXlsx() {
   async function patchSheet(sheetPath, tablePath, dataRows, numCols, lastColLetter) {
     const sXml = await zip.file(sheetPath).async('string');
     zip.file(sheetPath, patchSheetXml(sXml, dataRows, numCols));
-    const headers = extractHeaderNames(sXml, sharedStrings);
+    const rawHeaders = extractHeaderNames(sXml, sharedStrings);
+    // Always produce exactly numCols entries so tableColumns count matches the ref
+    const headers = Array.from({ length: numCols }, (_, i) => rawHeaders[i] || `Column${i + 1}`);
     const tXml = await zip.file(tablePath).async('string');
     const newRef = `A1:${lastColLetter}${dataRows.length + 1}`;
     zip.file(tablePath, patchTableXml(tXml, newRef, headers));
