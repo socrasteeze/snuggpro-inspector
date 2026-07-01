@@ -1115,11 +1115,61 @@ function patchSheetXml(sheetXml, dataRows, numCols) {
     .replace(/(<dimension ref=")[^"]*(")/,  `$1A1:${lastCol}${lastRow}$2`);
 }
 
-// Extends both the table ref and its autoFilter ref to cover all data rows.
-function patchTableXml(tableXml, newRef) {
-  return tableXml
+// Parse the shared string table from xl/sharedStrings.xml into an index array.
+function parseSharedStrings(ssXml) {
+  const strings = [];
+  const siRe = /<si>([\s\S]*?)<\/si>/g;
+  let sm;
+  while ((sm = siRe.exec(ssXml)) !== null) {
+    const parts = [];
+    const tRe = /<t[^>]*>([^<]*)<\/t>/g;
+    let tm;
+    while ((tm = tRe.exec(sm[1])) !== null) parts.push(tm[1]);
+    strings.push(parts.join(''));
+  }
+  return strings;
+}
+
+// Extract the text value of each cell in row 1 of a sheet XML.
+// Handles both shared strings (t="s") and inline strings (t="inlineStr").
+function extractHeaderNames(sheetXml, sharedStrings) {
+  const headerMatch = sheetXml.match(/<row r="1"[\s\S]*?<\/row>/);
+  if (!headerMatch) return [];
+  const names = [];
+  const cellRe = /<c r="[A-Z]+1"([^>]*)>([\s\S]*?)<\/c>/g;
+  let cm;
+  while ((cm = cellRe.exec(headerMatch[0])) !== null) {
+    const typeM = cm[1].match(/\bt="([^"]*)"/);
+    const cellType = typeM ? typeM[1] : '';
+    const inner = cm[2];
+    if (cellType === 's') {
+      const vM = inner.match(/<v>(\d+)<\/v>/);
+      names.push(vM ? (sharedStrings[+vM[1]] || '') : '');
+    } else if (cellType === 'inlineStr') {
+      const tM = inner.match(/<t[^>]*>([^<]*)<\/t>/);
+      names.push(tM ? tM[1] : '');
+    } else {
+      const vM = inner.match(/<v>([^<]*)<\/v>/);
+      names.push(vM ? vM[1] : '');
+    }
+  }
+  return names;
+}
+
+// Updates ref + autoFilter ref and rebuilds <tableColumns> to match the actual headers,
+// fixing the mismatch that causes Excel to repair/remove the table.
+function patchTableXml(tableXml, newRef, columnNames) {
+  let out = tableXml
     .replace(/(<table\b[^>]* ref=")[^"]*(")/,       `$1${newRef}$2`)
     .replace(/(<autoFilter\b[^>]* ref=")[^"]*(")/,  `$1${newRef}$2`);
+  if (columnNames && columnNames.length) {
+    const colsXml = columnNames.map((n, i) =>
+      `<tableColumn id="${i + 1}" name="${xmlEsc(n || ('Column' + (i + 1)))}"/>`
+    ).join('');
+    out = out.replace(/<tableColumns[\s\S]*?<\/tableColumns>/,
+      `<tableColumns count="${columnNames.length}">${colsXml}</tableColumns>`);
+  }
+  return out;
 }
 
 async function exportXlsx() {
@@ -1187,12 +1237,17 @@ async function exportXlsx() {
   // Open template ZIP and patch sheets + table refs in-place
   const zip = await JSZip.loadAsync(tplBuf);
 
+  // Load shared strings once; needed to resolve header cell values
+  const ssFile = zip.file('xl/sharedStrings.xml');
+  const sharedStrings = ssFile ? parseSharedStrings(await ssFile.async('string')) : [];
+
   async function patchSheet(sheetPath, tablePath, dataRows, numCols, lastColLetter) {
     const sXml = await zip.file(sheetPath).async('string');
     zip.file(sheetPath, patchSheetXml(sXml, dataRows, numCols));
+    const headers = extractHeaderNames(sXml, sharedStrings);
     const tXml = await zip.file(tablePath).async('string');
     const newRef = `A1:${lastColLetter}${dataRows.length + 1}`;
-    zip.file(tablePath, patchTableXml(tXml, newRef));
+    zip.file(tablePath, patchTableXml(tXml, newRef, headers));
   }
 
   await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     5,  'E');
