@@ -361,6 +361,36 @@ function isFarmworkerProgram() {
   return selectedProgram === 'region1' || selectedProgram === 'region2';
 }
 
+// Map a job's HVAC systems to a reporting code:
+//   rDXHP  = Heat Pump
+//   rDXGF  = Central AC with Gas Furnace
+//   rNCEH  = No CAC, Electric Resistance Heating
+//   rNCGF  = No CAC, Gas Furnace
+//   rWTD   = Weighted (multiple distinct heating types)
+function classifyHvac(data) {
+  const hvacs = Array.isArray(data?.hvacs) ? data.hvacs : [];
+  if (!hvacs.length) return '';
+
+  let hasHP = false, hasCentralAC = false, hasGasHeat = false, hasElecHeat = false;
+  for (const h of hvacs) {
+    const eq   = (h.hvacSystemEquipmentType || '').toLowerCase();
+    const fuel = h.hvacHeatingEnergySource  || '';
+    const isGas = fuel === 'Natural Gas' || fuel === 'Propane';
+
+    if (eq.includes('heat pump'))                                           hasHP        = true;
+    if (eq.includes('central ac') || eq.includes('furnace / central ac'))  hasCentralAC = true;
+    if ((eq.includes('furnace') || eq.includes('boiler')) && isGas)        hasGasHeat   = true;
+    if (eq === 'electric resistance')                                       hasElecHeat  = true;
+  }
+
+  if ([hasHP, hasGasHeat, hasElecHeat].filter(Boolean).length > 1) return 'rWTD';
+  if (hasHP)                               return 'rDXHP';
+  if (hasCentralAC && hasGasHeat)          return 'rDXGF';
+  if (!hasCentralAC && hasElecHeat)        return 'rNCEH';
+  if (!hasCentralAC && hasGasHeat)         return 'rNCGF';
+  return '';
+}
+
 // Derive savings % and program tier from rebatesIncentives metadata on lastData.
 // Returns { pct, tier, tierLabel, basisLabel, basisClass }
 function getReportingContext() {
@@ -1120,10 +1150,10 @@ async function exportXlsx() {
       const { pct, tier } = getReportingContext();
       const jobMeasureRows = flattenMeasures(data);
 
-      // Sheet1: AuditId, Path, Savings %, TypeOfHome
+      // Sheet1: AuditId, Path, Savings %, TypeOfHome, HVAC
       const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
       const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
-      mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome]);
+      mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome, classifyHvac(data)]);
 
       // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
       // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
@@ -1165,7 +1195,7 @@ async function exportXlsx() {
     zip.file(tablePath, patchTableXml(tXml, newRef));
   }
 
-  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     4,  'D');
+  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     5,  'E');
   await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18, 'R');
   await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8,  'H');
   await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8,  'H');
