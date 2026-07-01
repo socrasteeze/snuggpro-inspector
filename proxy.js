@@ -56,6 +56,17 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
+  // Serve the UI
+  if (req.url === '/' && req.method === 'GET') {
+    const htmlPath = path.join(__dirname, 'public', 'index.html');
+    if (!fs.existsSync(htmlPath)) {
+      res.writeHead(404); res.end('public/index.html not found'); return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(fs.readFileSync(htmlPath));
+    return;
+  }
+
   // Return program list for the UI switcher
   if (req.url === '/programs' && req.method === 'GET') {
     const list = Object.entries(PROGRAMS).map(([key, p]) => ({ key, name: p.name, active: !!(p.pub && p.priv) }));
