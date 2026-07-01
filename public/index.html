@@ -1117,11 +1117,10 @@ async function exportXlsx() {
       if (!res.ok || !data) { errors.push(`Job ${jobId}: ${res.status}`); continue; }
 
       lastData = data;
-      const tier = getReportingContext().tier;
+      const { pct, tier } = getReportingContext();
       const jobMeasureRows = flattenMeasures(data);
 
       // Sheet1: AuditId, Path, Savings %, TypeOfHome
-      const { pct } = getReportingContext();
       const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
       const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
       mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome]);
