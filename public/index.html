@@ -1120,13 +1120,11 @@ async function exportXlsx() {
       const tier = getReportingContext().tier;
       const jobMeasureRows = flattenMeasures(data);
 
-      // Sheet1: AuditId, Path, Combined kWh, TypeOfHome
+      // Sheet1: AuditId, Path, Savings %, TypeOfHome
+      const { pct } = getReportingContext();
       const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
-      const combinedKwh = jobMeasureRows.reduce((sum, r) =>
-        sum + (typeof r.savedKwh === 'number' ? r.savedKwh : 0)
-            + (typeof r.deemedKwh === 'number' ? r.deemedKwh : 0), 0);
       const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
-      mainOut.push([jobId, path, +combinedKwh.toFixed(4), typeOfHome]);
+      mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome]);
 
       // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
       // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
