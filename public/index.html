@@ -514,7 +514,7 @@ function flattenMeasures(data) {
 }
 
 function parseJobIds(raw) {
-  return raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+  return [...new Set(raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean))];
 }
 
 async function fetchMeasures(rawIds) {
