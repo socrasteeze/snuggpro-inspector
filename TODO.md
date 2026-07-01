@@ -113,7 +113,8 @@ identical** on both branches — only **how you launch** differs.
       whether the job is on the Plus or Deep tier, and it should carry through to the CSV/XLSX
       export. Source is already computed — `getReportingContext().tier` returns
       `'deep'` / `'plus'` / `'review'` per job. Add a `tier` column to the Measures table +
-      export (label it "Tier", values "Deep" / "Plus").
+      export (label it "Tier", values "Deep" / "Plus"). Leave the cell **blank** for the
+      `'review'` tier (below 5% savings).
 
 ## Troubleshooting
 - **Login email didn't arrive** → check spam; confirm `FROM_EMAIL` matches the verified
