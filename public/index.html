@@ -1234,28 +1234,41 @@ async function exportXlsx() {
     }
   }
 
-  // Open template ZIP and patch sheets + table refs in-place
+  // Open template ZIP and patch sheets; strip all Excel tables to avoid repair errors
   const zip = await JSZip.loadAsync(tplBuf);
 
-  // Load shared strings once; needed to resolve header cell values
-  const ssFile = zip.file('xl/sharedStrings.xml');
-  const sharedStrings = ssFile ? parseSharedStrings(await ssFile.async('string')) : [];
-
-  async function patchSheet(sheetPath, tablePath, dataRows, numCols, lastColLetter) {
+  async function patchSheet(sheetPath, tablePath, dataRows, numCols) {
     const sXml = await zip.file(sheetPath).async('string');
-    zip.file(sheetPath, patchSheetXml(sXml, dataRows, numCols));
-    const rawHeaders = extractHeaderNames(sXml, sharedStrings);
-    // Always produce exactly numCols entries so tableColumns count matches the ref
-    const headers = Array.from({ length: numCols }, (_, i) => rawHeaders[i] || `Column${i + 1}`);
-    const tXml = await zip.file(tablePath).async('string');
-    const newRef = `A1:${lastColLetter}${dataRows.length + 1}`;
-    zip.file(tablePath, patchTableXml(tXml, newRef, headers));
+    // Write data and remove <tableParts> reference so the sheet doesn't point to a table
+    const patched = patchSheetXml(sXml, dataRows, numCols)
+      .replace(/<tableParts\b[\s\S]*?<\/tableParts>/g, '')
+      .replace(/<tableParts\b[^>]*\/>/g, '');
+    zip.file(sheetPath, patched);
+
+    // Remove the table XML file and its relationship entry
+    zip.remove(tablePath);
+    const sheetName = sheetPath.split('/').pop();
+    const relsPath = `xl/worksheets/_rels/${sheetName}.rels`;
+    const relsFile = zip.file(relsPath);
+    if (relsFile) {
+      const relsXml = await relsFile.async('string');
+      const cleaned = relsXml.replace(/<Relationship\b[^>]*Type="[^"]*\/table"[^>]*\/>/g, '');
+      zip.file(relsPath, cleaned);
+    }
   }
 
-  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     5,  'E');
-  await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18, 'R');
-  await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8,  'H');
-  await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8,  'H');
+  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     5);
+  await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18);
+  await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8);
+  await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8);
+
+  // Remove table content-type entries from [Content_Types].xml
+  const ctFile = zip.file('[Content_Types].xml');
+  if (ctFile) {
+    const ctXml = await ctFile.async('string');
+    zip.file('[Content_Types].xml',
+      ctXml.replace(/<Override\b[^>]*\/tables\/[^>]*\/>/g, ''));
+  }
 
   const wbBytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   const blob = new Blob([wbBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
