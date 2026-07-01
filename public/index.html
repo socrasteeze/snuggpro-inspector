@@ -127,7 +127,6 @@
 <nav class="sidebar">
   <div class="sidebar-header">
     <h1>SnuggPro Inspector</h1>
-    <p>localhost:3001 proxy</p>
     <select class="program-select" id="programSelect" onchange="onProgramChange(this.value)">
       <option value="region1">Region 1 – CA LIWP Farmworkers</option>
       <option value="region2">Region 2 – CA LIWP Farmworkers</option>
@@ -204,7 +203,7 @@
     <div class="sidebar-section-label">Account / Company</div>
     <button class="nav-item" data-path="/jobs" data-label="All Jobs"><span class="method">GET</span>All Jobs</button>
     <button class="nav-item" data-path="/companies" data-label="Companies"><span class="method">GET</span>Companies</button>
-    <button class="nav-item" data-path="/programs" data-label="Programs"><span class="method">GET</span>Programs</button>
+    <button class="nav-item" data-path="/snugg-programs" data-label="Programs"><span class="method">GET</span>Programs</button>
     <button class="nav-item" data-path="/accounts" data-label="Accounts"><span class="method">GET</span>Accounts</button>
   </div>
 </nav>
@@ -238,24 +237,14 @@ let currentPath = '/jobs/{jobId}';
 let lastData = null;
 let currentView = 'friendly';
 let selectedProgram = 'region1';
-let proxyPort = 3001;
 
 function onProgramChange(val) {
   selectedProgram = val;
 }
 
+// Relative URLs — no port detection needed; worker serves everything on same origin.
 function proxyUrl(apiPath) {
-  return `http://localhost:${proxyPort}/proxy${apiPath}?program=${selectedProgram}`;
-}
-
-async function detectProxyPort(base = 3001, tries = 5) {
-  for (let p = base; p < base + tries; p++) {
-    try {
-      const r = await fetch(`http://localhost:${p}/programs`, { signal: AbortSignal.timeout(800) });
-      if (r.ok) { proxyPort = p; return p; }
-    } catch(_) {}
-  }
-  return null;
+  return `/proxy${apiPath}?program=${selectedProgram}`;
 }
 
 document.querySelectorAll('.nav-item').forEach(btn => {
@@ -321,7 +310,7 @@ async function doFetch() {
     renderFriendly(data);
   } catch(e) {
     setBadge('err', 'Network error');
-    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Could not reach proxy at localhost:${proxyPort}.<br/>Make sure <code>node proxy.js</code> is running.</div>`;
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">Request failed: ${e.message}</div>`;
   }
 }
 
@@ -546,7 +535,7 @@ async function fetchMeasures(rawIds) {
   if (allRows.length === 0) {
     setBadge('err', 'No data');
     document.getElementById('friendly-view').innerHTML =
-      `<div class="err-block">${errors.join('<br/>') || `Could not reach proxy at localhost:${proxyPort}.<br/>Make sure <code>node proxy.js</code> is running.`}</div>`;
+      `<div class="err-block">${errors.join('<br/>') || 'No data returned. Check the Job ID and selected program.'}</div>`;
     return;
   }
 
@@ -1054,12 +1043,7 @@ function copyJson() {
 }
 
 // Auto-fetch on load
-window.addEventListener('load', async () => {
-  const port = await detectProxyPort();
-  const el = document.querySelector('.sidebar-header p');
-  if (el) el.textContent = port ? `localhost:${port} proxy` : 'proxy not found';
-  doFetch();
-});
+window.addEventListener('load', () => doFetch());
 
 // ---------- XLSX EXPORT ----------
 // Uses JSZip to patch the template ZIP directly, avoiding SheetJS's table round-trip
@@ -1117,10 +1101,10 @@ async function exportXlsx() {
 
   let tplBuf;
   try {
-    const tplRes = await fetch('http://localhost:3001/template');
-    if (!tplRes.ok) { alert('template.xlsx not found — make sure it is in the project root and the proxy is running.'); setBadge('err', 'No template'); return; }
+    const tplRes = await fetch('/template');
+    if (!tplRes.ok) { alert('template.xlsx not found — contact your administrator.'); setBadge('err', 'No template'); return; }
     tplBuf = await tplRes.arrayBuffer();
-  } catch(e) { alert('Could not load template. Is the proxy running?'); setBadge('err', 'Proxy error'); return; }
+  } catch(e) { alert('Could not load template.'); setBadge('err', 'Template error'); return; }
 
   const mainOut = [], measuresOut = [], elecOut = [], gasOut = [], errors = [];
 
@@ -1194,14 +1178,6 @@ async function exportXlsx() {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
-
-  try {
-    await fetch(`http://localhost:3001/exports?filename=${encodeURIComponent(filename)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body: blob
-    });
-  } catch(_) {}
 
   const note = errors.length ? ` · ${errors.length} error(s)` : '';
   setBadge('ok', `Exported ${filename}${note}`);

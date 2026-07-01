@@ -1,0 +1,30 @@
+# Cloudflare Worker config for the hosted SnuggPro Inspector.
+#
+# Deploy:  npx wrangler deploy   (after `wrangler login` and setting secrets)
+# Local:   npx wrangler dev      (reads secrets/vars from .dev.vars)
+#
+# Secrets are NOT stored here — set them with `wrangler secret put`:
+#   REGION1_PUBLIC_KEY  REGION1_PRIVATE_KEY
+#   REGION2_PUBLIC_KEY  REGION2_PRIVATE_KEY
+#   SDGE_PUBLIC_KEY     SDGE_PRIVATE_KEY
+#   SCE_PUBLIC_KEY      SCE_PRIVATE_KEY
+#   SESSION_SECRET  EMAIL_API_KEY
+
+name = "snuggpro-inspector"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Serve the single-file UI (public/index.html) as static assets.
+# run_worker_first = true is REQUIRED: it makes the Worker (and its login gate) run
+# before any asset is served. Without it Cloudflare serves index.html directly,
+# bypassing auth entirely.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+# Comma-separated allowlist of who may sign in. Edit + `wrangler deploy` to change the team.
+ALLOWED_EMAILS = "person1@example.com,person2@example.com"
+# Verified sender address for the login-code emails (see README for SendGrid setup).
+FROM_EMAIL = "you@yourcompany.com"

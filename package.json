@@ -4,10 +4,15 @@
   "description": "Local proxy + browser UI to inspect SnuggPro jobs by ID and flatten measures for reporting/import.",
   "main": "proxy.js",
   "scripts": {
-    "start": "node proxy.js"
+    "start": "node proxy.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
   },
   "license": "UNLICENSED",
   "private": true
