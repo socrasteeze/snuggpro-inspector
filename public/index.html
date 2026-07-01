@@ -1116,15 +1116,22 @@ async function exportXlsx() {
       try { data = JSON.parse(text); } catch(_) { data = null; }
       if (!res.ok || !data) { errors.push(`Job ${jobId}: ${res.status}`); continue; }
 
-      mainOut.push([jobId]);
-
       lastData = data;
       const tier = getReportingContext().tier;
+      const jobMeasureRows = flattenMeasures(data);
+
+      // Sheet1: AuditId, Path, Combined kWh, TypeOfHome
+      const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
+      const combinedKwh = jobMeasureRows.reduce((sum, r) =>
+        sum + (typeof r.savedKwh === 'number' ? r.savedKwh : 0)
+            + (typeof r.deemedKwh === 'number' ? r.deemedKwh : 0), 0);
+      const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
+      mainOut.push([jobId, path, +combinedKwh.toFixed(4), typeOfHome]);
 
       // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
       // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
       // Deemed kWh,Deemed Therms,Deemed MMBTU,SavedkWh,SavedTherms,SavedMBTUs
-      flattenMeasures(data).forEach(r => {
+      jobMeasureRows.forEach(r => {
         measuresOut.push([
           jobId, r.measure, r.source, r.name, r.code,
           r.quantity, r.unit, r.costPerUnit, r.lineCost,
@@ -1161,7 +1168,7 @@ async function exportXlsx() {
     zip.file(tablePath, patchTableXml(tXml, newRef));
   }
 
-  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     1,  'A');
+  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     4,  'D');
   await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18, 'R');
   await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8,  'H');
   await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8,  'H');
