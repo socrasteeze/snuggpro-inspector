@@ -108,6 +108,13 @@ identical** on both branches — only **how you launch** differs.
 - [ ] Login email actually arrives (check spam the first time).
 - [ ] Rotate the SnuggPro key after confirming everything works (Step 9).
 
+## Backlog / enhancements
+- [ ] **Measures export: add a per-row program tier** (Plus vs Deep). Each row should show
+      whether the job is on the Plus or Deep tier, and it should carry through to the CSV/XLSX
+      export. Source is already computed — `getReportingContext().tier` returns
+      `'deep'` / `'plus'` / `'review'` per job. Add a `tier` column to the Measures table +
+      export (label it "Tier", values "Deep" / "Plus").
+
 ## Troubleshooting
 - **Login email didn't arrive** → check spam; confirm `FROM_EMAIL` matches the verified
   SendGrid sender exactly; confirm `EMAIL_API_KEY` is set (`npx wrangler secret list`).
