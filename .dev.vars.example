@@ -1,0 +1,29 @@
+# Copy to .dev.vars (gitignored) for local `wrangler dev`.
+# In production these go in via `wrangler secret put` instead — never commit real values.
+
+# Region 1 - California LIWP Farmworkers
+REGION1_PUBLIC_KEY=your-region1-public-key
+REGION1_PRIVATE_KEY=your-region1-private-key
+
+# Region 2 - California LIWP Farmworkers
+REGION2_PUBLIC_KEY=your-region2-public-key
+REGION2_PRIVATE_KEY=your-region2-private-key
+
+# SDGE - Whole Home Program
+SDGE_PUBLIC_KEY=your-sdge-public-key
+SDGE_PRIVATE_KEY=your-sdge-private-key
+
+# SCE/SCG ESA Whole Home
+SCE_PUBLIC_KEY=your-sce-public-key
+SCE_PRIVATE_KEY=your-sce-private-key
+
+# Random string used to sign session/OTP cookies. Generate one, e.g.:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=replace-with-a-long-random-string
+
+# Email provider API key (SendGrid by default)
+EMAIL_API_KEY=your-sendgrid-api-key
+
+# Vars also live in wrangler.toml for production; set them here for local runs too.
+ALLOWED_EMAILS=you@example.com
+FROM_EMAIL=you@yourcompany.com
