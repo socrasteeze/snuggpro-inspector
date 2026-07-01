@@ -1181,8 +1181,8 @@ async function exportXlsx() {
 
   let tplBuf;
   try {
-    const tplRes = await fetch('/template');
-    if (!tplRes.ok) { alert('template.xlsx not found — contact your administrator.'); setBadge('err', 'No template'); return; }
+    const tplRes = await fetch('/template_range');
+    if (!tplRes.ok) { alert('template_range.xlsx not found — contact your administrator.'); setBadge('err', 'No template'); return; }
     tplBuf = await tplRes.arrayBuffer();
   } catch(e) { alert('Could not load template.'); setBadge('err', 'Template error'); return; }
 
