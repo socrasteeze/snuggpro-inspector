@@ -14,7 +14,8 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3001;
 const EXPORTS_DIR = path.join(__dirname, 'exports');
-const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
+const TEMPLATE_PATH       = path.join(__dirname, 'template.xlsx');
+const TEMPLATE_RANGE_PATH = path.join(__dirname, 'template_range.xlsx');
 
 const PROGRAMS = {
   region1: { name: 'Region 1 – CA LIWP Farmworkers', pub: process.env.REGION1_PUBLIC_KEY, priv: process.env.REGION1_PRIVATE_KEY },
@@ -75,16 +76,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Serve template.xlsx to the browser
-  if (req.url === '/template' && req.method === 'GET') {
-    if (!fs.existsSync(TEMPLATE_PATH)) {
+  // Serve template files to the browser
+  const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if ((req.url === '/template' || req.url === '/template_range') && req.method === 'GET') {
+    const filePath = req.url === '/template_range' ? TEMPLATE_RANGE_PATH : TEMPLATE_PATH;
+    if (!fs.existsSync(filePath)) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'template.xlsx not found in project root' }));
+      res.end(JSON.stringify({ error: `${path.basename(filePath)} not found in project root` }));
       return;
     }
-    const data = fs.readFileSync(TEMPLATE_PATH);
-    res.writeHead(200, { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    res.end(data);
+    res.writeHead(200, { 'Content-Type': XLSX_MIME });
+    res.end(fs.readFileSync(filePath));
     return;
   }
 
