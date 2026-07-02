@@ -756,7 +756,7 @@ function exportMeasuresCsv() {
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `measures_${jobFileTag()}.csv`;
+  a.download = `exports/measures_${jobFileTag()}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -979,7 +979,7 @@ function exportUsageCsv() {
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `usage_${jobFileTag()}.csv`;
+  a.download = `exports/usage_${jobFileTag()}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -1279,7 +1279,7 @@ async function exportXlsx() {
 
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.download = `exports/${filename}`;
   a.click();
   URL.revokeObjectURL(a.href);
 
