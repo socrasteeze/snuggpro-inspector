@@ -27,3 +27,8 @@ EMAIL_API_KEY=your-sendgrid-api-key
 # Vars also live in wrangler.toml for production; set them here for local runs too.
 ALLOWED_EMAILS=you@example.com
 FROM_EMAIL=you@yourcompany.com
+
+# Solo local use only: skips the email login gate entirely under `wrangler dev`.
+# Only works here (.dev.vars is gitignored and never deployed) — there is no equivalent
+# for the hosted/team deployment, so this can never disable login for anyone else.
+# LOCAL_BYPASS_AUTH=true
