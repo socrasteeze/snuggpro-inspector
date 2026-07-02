@@ -164,6 +164,14 @@ function allowedEmails(env) {
   return (env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 }
 
+// Local-only escape hatch: set LOCAL_BYPASS_AUTH=true in .dev.vars (gitignored, never
+// deployed) to skip the login gate under `wrangler dev`. There is no way to set this in
+// production — it's not in wrangler.toml [vars] and must never be added there or via
+// `wrangler secret put`.
+function bypassAuth(env) {
+  return env.LOCAL_BYPASS_AUTH === 'true';
+}
+
 async function currentSession(request, env) {
   const token = getCookie(request, 'session');
   const payload = await readToken(token, env.SESSION_SECRET);
@@ -286,7 +294,7 @@ export default {
     }
 
     // --- everything below requires a valid session ---
-    const session = await currentSession(request, env);
+    const session = bypassAuth(env) ? { email: 'local-dev' } : await currentSession(request, env);
     if (!session) {
       return new Response(null, { status: 302, headers: { 'Location': '/auth/login' } });
     }
