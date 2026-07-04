@@ -731,6 +731,22 @@ function toggleSavedDeemed() {
 
 // Build a clean, comma/space-free filename token from the Job ID input.
 //   1 job  -> job_332046      2-3 jobs -> jobs_332046-355981      4+ -> 5jobs
+// Save an export file. Against the local proxy.js, POST /exports lands it in the
+// repo's exports/ folder; on the hosted Worker that route doesn't exist, so fall
+// back to a normal browser download. Never put path separators in a.download —
+// browsers strip them, they can't create subfolders.
+async function saveOrDownload(blob, filename) {
+  try {
+    const res = await fetch(`/exports?filename=${encodeURIComponent(filename)}`, { method: 'POST', body: blob });
+    if (res.ok) { setBadge('ok', `Saved to exports/${filename}`); return; }
+  } catch (_) {}
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function jobFileTag() {
   const ids = parseJobIds(document.getElementById('jobId').value).map(s => s.replace(/[^\w.-]/g, ''));
   if (ids.length === 0) return 'export';
@@ -754,11 +770,7 @@ function exportMeasuresCsv() {
     lines.push(cells.join(','));
   });
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `exports/measures_${jobFileTag()}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveOrDownload(blob, `measures_${jobFileTag()}.csv`);
 }
 // ---------- END MEASURES ----------
 
@@ -977,11 +989,7 @@ function exportUsageCsv() {
     lines.push(cells.join(','));
   });
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `exports/usage_${jobFileTag()}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveOrDownload(blob, `usage_${jobFileTag()}.csv`);
 }
 // ---------- END USAGE / BILLING ----------
 
@@ -1181,7 +1189,7 @@ async function exportXlsx() {
 
   let tplBuf;
   try {
-    const tplRes = await fetch('/template_range');
+    const tplRes = await fetch('/template_range.xlsx');
     if (!tplRes.ok) { alert('template_range.xlsx not found — contact your administrator.'); setBadge('err', 'No template'); return; }
     tplBuf = await tplRes.arrayBuffer();
   } catch(e) { alert('Could not load template.'); setBadge('err', 'Template error'); return; }
@@ -1277,11 +1285,7 @@ async function exportXlsx() {
   const idStr   = jobIds.length === 1 ? jobIds[0] : `${jobIds.length}jobs`;
   const filename = `export_${idStr}_${dateStr}.xlsx`;
 
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `exports/${filename}`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  await saveOrDownload(blob, filename);
 
   const note = errors.length ? ` · ${errors.length} error(s)` : '';
   setBadge('ok', `Exported ${filename}${note}`);

@@ -7,11 +7,11 @@ Guidance for Claude Code when working in this repository.
 A tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. The signing proxy exists because SnuggPro's API has no CORS support. Two ways to run it:
 
 1. **Hosted (team) — `worker.js` + `wrangler.toml`.** A Cloudflare Worker that (a) gates access behind an email one-time-code login restricted to an `ALLOWED_EMAILS` allowlist, (b) serves the UI from `public/` as a static asset, and (c) signs (HMAC-SHA256) and forwards `/proxy/*` to `https://api.snuggpro.com`. Same origin as the UI, so no CORS dance. Secrets (a public/private key pair per program — `REGION1_*`, `REGION2_*`, `SDGE_*`, `SCE_*` — plus `SESSION_SECRET`, `EMAIL_API_KEY`) live as Wrangler secrets. This is how the team uses it — `npx wrangler deploy`.
-2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` that signs requests with API keys from `.env` and forwards them, adding CORS headers. Offline/solo fallback only.
+2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` (auto-binds the next port if busy) that serves the UI same-origin at `/`, the program list at `/programs`, the XLSX templates, and the signing proxy at `/proxy/*` with keys from `.env`; `POST /exports` saves export files into `exports/`. No login.
 
-The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path and renders job data, including a flattened Measures Table for reporting and CSV export.
+The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path (with `?program=` from the program switcher) and renders job data, including a flattened Measures Table and Usage/Billing view with CSV and template-based XLSX export.
 
-There is no build, bundler, or test runner. Edit files; for local runs use `npx wrangler dev` (serves UI + login + proxy at `localhost:8787`) since the same-origin `/proxy` path means opening the HTML via `file://` no longer reaches a proxy.
+There is no build, bundler, or test runner. Edit files and reload. Local runs: `npm start` → `http://localhost:3001` (no login), or `npx wrangler dev` → `localhost:8787` to exercise the hosted login flow (set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip it; `run.bat`/`stop.bat`/`restart.bat` wrap this on Windows).
 
 ## Running it
 
@@ -29,9 +29,9 @@ See README "Team deployment" for the full walkthrough (SendGrid sender, adding t
 ```
 npm install
 cp .env.example .env   # fill in real keys
-npx wrangler dev       # serves UI + login + proxy at http://localhost:8787
+npm start              # proxy.js serves UI + proxy at http://localhost:3001, no login
 ```
-(`npm start` still runs the bare `proxy.js` on :3001, but the UI's same-origin `/proxy` path means you should drive local testing through `wrangler dev`.)
+(To test the hosted flow locally instead: `npx wrangler dev` on :8787, with `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the email login.)
 
 ## Architecture and key invariants
 
@@ -45,9 +45,10 @@ npx wrangler dev       # serves UI + login + proxy at http://localhost:8787
 - Login is gated by `ALLOWED_EMAILS` (comma-separated, in `wrangler.toml`). The allowlist is re-checked on **every** request, so removing an email + redeploy revokes access immediately.
 - Session and OTP are **stateless signed cookies**: `base64url(payloadJSON) + "." + hmacHex(base64url(payloadJSON), SESSION_SECRET)`, verified with a constant-time compare and an `exp` check. There is no datastore; the OTP is bound to the same browser via its cookie.
 - The 6-digit code is never stored in plaintext — the OTP cookie holds `hmacHex(email:code, SESSION_SECRET)`, compared on verify.
+- `LOCAL_BYPASS_AUTH=true` (in gitignored `.dev.vars` only) skips the gate for local dev. It is double-guarded: the Worker also requires the request hostname to be `localhost`/`127.0.0.1`. NEVER add it to `wrangler.toml` or as a production secret.
 
 ### The Measures Table (most important business logic)
-Lives in `snuggpro-inspector.html`, in `flattenMeasures(data)` and `buildCombinedSummary()`. It reads `/jobs/{id}/all-data`.
+Lives in `public/index.html`, in `flattenMeasures(data)` and `buildCombinedSummary()`. It reads `/jobs/{id}/all-data`.
 
 Rules that MUST hold (each was a real correction — do not regress them):
 
@@ -63,6 +64,8 @@ Validation reference (job 332046, Bissonette): combined 967.82 kWh = 538.69 mode
 - All displayed numbers round only for display (`toFixed(2)`); the raw full-precision value is what gets copied to clipboard and exported to CSV. Keep that split — reporting needs full precision.
 - Cells copy on click via `copyCell()` using a `data-copy` attribute holding the raw value.
 - Sorting is column-wise; the TOTAL row sums each numeric column independently.
+- All exports save via `saveOrDownload()`: it tries `POST /exports` (proxy.js writes into `exports/`) and falls back to a plain browser download on the hosted Worker. Never put a path separator in `a.download` — browsers strip it.
+- The XLSX template is fetched at `/template_range.xlsx` — keep the extension. The Worker serves it as a static asset from `public/`, and extension-less paths 404 there (proxy.js accepts both forms).
 
 ## When adding endpoints
 Endpoints are listed as `<button class="nav-item" data-path="/jobs/{jobId}/...">` in the sidebar. `{jobId}` is substituted at fetch time. The special `data-path="MEASURES"` and `data-path="USAGE"` tokens route to reporting views (`fetchMeasures` / `fetchUsageBilling`) instead of a raw GET. The full endpoint list came from `swagger.json` (kept in repo for reference).

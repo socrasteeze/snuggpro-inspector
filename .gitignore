@@ -7,6 +7,9 @@ node_modules/
 # Wrangler build/cache (from local worker testing)
 .wrangler/
 
+# Editor/backup droppings
+*.bak
+
 # Generated exports (keep the folder, not its output)
 exports/*
 !exports/.gitkeep

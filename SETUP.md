@@ -43,7 +43,7 @@ No domain and no DNS/nameserver changes are required — the free `*.workers.dev
 ## 1. Install (one-time, your machine)
 
 ```bash
-git clone <this repo>            # or: git checkout claude/team-api-caller-auth-2hjsiq
+git clone <this repo>            # everything lives on main
 cd snuggpro-inspector
 npm install                      # installs wrangler (the Cloudflare CLI)
 npx wrangler login               # opens a browser to authorize your Cloudflare account
@@ -148,9 +148,17 @@ cp .dev.vars.example .dev.vars   # fill in keys; this file is gitignored
 npx wrangler dev                 # serves UI + login + proxy at http://localhost:8787
 ```
 
-`.dev.vars` holds the same secrets/vars as production, just for local runs. (`proxy.js` on
-`localhost:3001` remains as an offline solo fallback, but `wrangler dev` is the way to exercise
-the full hosted experience locally.)
+`.dev.vars` holds the same secrets/vars as production, just for local runs. Two conveniences:
+
+- **Skip the login gate while working solo:** set `LOCAL_BYPASS_AUTH=true` in `.dev.vars`.
+  It only works on `localhost` — the Worker refuses the bypass on any deployed hostname —
+  and `.dev.vars` is gitignored, so it can never reach the team deployment.
+- **Windows one-click:** `run.bat` checks out main, pulls, installs, and starts `wrangler dev`;
+  `stop.bat` / `restart.bat` manage the server on port 8787.
+
+(`proxy.js` on `localhost:3001` is the other local mode — it serves the UI same-origin with no
+login and saves exports into `exports/`. `wrangler dev` is the way to exercise the full hosted
+experience locally.)
 
 ---
 

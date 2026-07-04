@@ -1,7 +1,7 @@
 {
   "name": "snuggpro-inspector",
   "version": "1.0.0",
-  "description": "Local proxy + browser UI to inspect SnuggPro jobs by ID and flatten measures for reporting/import.",
+  "description": "Browser UI to inspect SnuggPro jobs and flatten measures/usage for reporting — runs locally via proxy.js or hosted as a Cloudflare Worker with email-code login.",
   "main": "proxy.js",
   "scripts": {
     "start": "node proxy.js",

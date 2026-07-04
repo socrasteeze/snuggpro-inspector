@@ -7,7 +7,7 @@ A local proxy and browser UI to pull SnuggPro job records by ID and inspect them
 The SnuggPro API (`https://api.snuggpro.com`) does not send CORS headers, so a browser cannot call it directly. A proxy signs each request with your API keys (HMAC-SHA256), forwards it to SnuggPro, and returns the response to the browser. There are two ways to run it:
 
 - **Hosted (for the team)** — a Cloudflare Worker (`worker.js`) serves the UI, gates access behind an email-code login, and signs requests. Teammates just open a link and sign in — no install. See [Team deployment](#team-deployment-cloudflare-worker).
-- **Local (for solo use)** — `proxy.js` runs on `localhost:3001` exactly as before. See [Local solo use](#local-solo-use-proxyjs).
+- **Local (for solo use)** — `proxy.js` on `localhost:3001` serves the UI, the program list, the XLSX template, and the signing proxy, and saves exports into `exports/`. See [Local solo use](#local-solo-use-proxyjs).
 
 ## Team deployment (Cloudflare Worker)
 
@@ -41,10 +41,12 @@ To add/remove a teammate later: edit `ALLOWED_EMAILS` in `wrangler.toml` and `np
    ```
    npm start
    ```
-   You should see `SnuggPro proxy running -> http://localhost:3001`.
-4. Open `public/index.html` in Chrome — but note: the UI now uses a same-origin `/proxy` path, so opening it directly via `file://` won't reach `localhost:3001`. For local use, prefer the Worker dev server (`npx wrangler dev`, see above), which serves the UI and proxy together. `proxy.js` remains as an offline fallback.
+   You should see `SnuggPro proxy running -> http://localhost:3001`. (If 3001 is busy it auto-binds the next free port.)
+4. Open **http://localhost:3001** in Chrome — the proxy serves the UI same-origin, so everything (endpoints, program switcher, exports) just works.
 
-Leave the proxy terminal running while you use the inspector.
+Leave the proxy terminal running while you use the inspector. Exports (CSV/XLSX) are saved into the repo's `exports/` folder in this mode.
+
+**Alternative: run the hosted stack locally.** `npx wrangler dev` serves the Worker (UI + email login + proxy) at `http://localhost:8787`; set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the login gate when working solo. On Windows, `run.bat` does checkout/pull/install and launches `wrangler dev` in one click (`stop.bat` / `restart.bat` manage it).
 
 ## Usage
 
@@ -61,6 +63,7 @@ Pulls `/jobs/{id}/all-data` and flattens line items into one sortable grid:
 - **DI rows** — direct-install line items, carrying deemed savings. Deemed values are per-unit in the API and are multiplied by quantity here so totals reconcile.
 - **Combined summary** — sums modeled + deemed into one reportable figure and flags the reporting basis from `combinedTotalEnergySavings`: over 15% defaults to modeled (saved); 5-15% to deemed; under 5% is flagged for review.
 - **Download CSV** — exports the full flattened set for import.
+- **Export XLSX** — fills the `public/template_range.xlsx` workbook (main/measures/electric/gas sheets) for one or many jobs; against `proxy.js` the file is saved to `exports/`, on the hosted Worker it downloads in the browser.
 
 ### Usage / Billing (Reporting)
 
@@ -77,7 +80,11 @@ Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into 
 - `worker.js` — Cloudflare Worker: email-code login + signing proxy + serves the UI (team deployment)
 - `wrangler.toml` — Worker config (allowlist, sender, assets binding)
 - `public/index.html` — browser UI (no build step, no framework)
-- `proxy.js` — local signing proxy (solo/offline fallback)
+- `public/template_range.xlsx` — XLSX export template (single source, served by both proxy and Worker)
+- `template.xlsx` — legacy XLSX template (kept for reference)
+- `proxy.js` — local signing proxy: serves UI, templates, `/programs`, and saves exports
+- `exports/` — where local-mode CSV/XLSX exports are saved (contents gitignored)
+- `run.bat` / `stop.bat` / `restart.bat` — Windows one-click launchers for `wrangler dev` (port 8787)
 - `.env` — your API keys for `proxy.js` (gitignored, never committed)
 - `.env.example` — template for `proxy.js`
 - `.dev.vars` / `.dev.vars.example` — secrets for local `wrangler dev` (gitignored)

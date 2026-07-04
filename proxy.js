@@ -1,6 +1,6 @@
 // SnuggPro API Proxy
 // Run: node proxy.js
-// Then open snuggpro-inspector.html in your browser
+// Then open http://localhost:3001 in your browser (the proxy serves the UI).
 //
 // Keys are loaded from .env (see .env.example). Never commit .env.
 
@@ -15,7 +15,8 @@ const path = require('path');
 const PORT = process.env.PORT || 3001;
 const EXPORTS_DIR = path.join(__dirname, 'exports');
 const TEMPLATE_PATH       = path.join(__dirname, 'template.xlsx');
-const TEMPLATE_RANGE_PATH = path.join(__dirname, 'template_range.xlsx');
+// Single source: the same file the Worker serves as a static asset.
+const TEMPLATE_RANGE_PATH = path.join(__dirname, 'public', 'template_range.xlsx');
 
 const PROGRAMS = {
   region1: { name: 'Region 1 – CA LIWP Farmworkers', pub: process.env.REGION1_PUBLIC_KEY, priv: process.env.REGION1_PRIVATE_KEY },
@@ -78,11 +79,12 @@ const server = http.createServer((req, res) => {
 
   // Serve template files to the browser
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-  if ((req.url === '/template' || req.url === '/template_range') && req.method === 'GET') {
-    const filePath = req.url === '/template_range' ? TEMPLATE_RANGE_PATH : TEMPLATE_PATH;
+  const isTemplateReq = ['/template', '/template.xlsx', '/template_range', '/template_range.xlsx'].includes(req.url);
+  if (isTemplateReq && req.method === 'GET') {
+    const filePath = req.url.startsWith('/template_range') ? TEMPLATE_RANGE_PATH : TEMPLATE_PATH;
     if (!fs.existsSync(filePath)) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: `${path.basename(filePath)} not found in project root` }));
+      res.end(JSON.stringify({ error: `${path.basename(filePath)} not found` }));
       return;
     }
     res.writeHead(200, { 'Content-Type': XLSX_MIME });
@@ -145,17 +147,24 @@ const server = http.createServer((req, res) => {
   upstream.end();
 });
 
+// Single 'listening' handler (not a per-listen callback): retries after EADDRINUSE
+// would stack callbacks and print one bogus "running" line per failed attempt.
+server.on('listening', () => {
+  const port = server.address().port;
+  console.log(`SnuggPro proxy running -> http://localhost:${port}`);
+  console.log(`Test: http://localhost:${port}/proxy/jobs/332046`);
+  if (port !== Number(PORT)) console.log(`(port ${PORT} was in use, bound to ${port} instead)`);
+});
+
 function listen(port) {
-  server.listen(port, () => {
-    console.log(`SnuggPro proxy running -> http://localhost:${port}`);
-    console.log(`Test: http://localhost:${port}/proxy/jobs/332046`);
-    if (port !== Number(PORT)) console.log(`(port ${PORT} was in use, bound to ${port} instead)`);
-  });
+  server.listen(port);
 }
 
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
-    const next = server.address() ? server.address().port + 1 : Number(PORT) + 1;
+    // server.address() is null when the bind failed — advance from the port that
+    // actually failed or retries loop forever on the same port.
+    const next = (Number(e.port) || Number(PORT)) + 1;
     console.warn(`Port ${e.port ?? PORT} in use, trying ${next}…`);
     server.close(() => listen(next));
   } else {
