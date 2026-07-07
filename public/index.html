@@ -215,7 +215,7 @@
     <input type="text" id="jobId" value="332046" placeholder="e.g. 332046, 355981" />
     <span class="job-hint">comma or space separated</span>
     <button class="fetch-btn" id="fetchBtn" onclick="doFetch()">Fetch</button>
-    <span class="endpoint-display" id="endpointDisplay">/jobs/{jobId}</span>
+    <span class="endpoint-display" id="endpointDisplay">MEASURES</span>
     <span class="status-badge" id="statusBadge" style="display:none"></span>
   </div>
 
@@ -233,7 +233,7 @@
 
 </div>
 <script>
-let currentPath = '/jobs/{jobId}';
+let currentPath = 'MEASURES';
 let lastData = null;
 let currentView = 'friendly';
 let selectedProgram = 'region1';
