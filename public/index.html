@@ -323,6 +323,8 @@ let savedDeemedCollapsed = false;
 
 const MEASURE_COLS = [
   { key: 'jobId',            label: 'Job',                num: false },
+  { key: 'stage',            label: 'Stage',              num: false },
+  { key: 'savingsPct',       label: 'Total Combined Energy Savings %', num: true },
   { key: 'measure',          label: 'Measure',            num: false },
   { key: 'source',           label: 'Src',                num: false },
   { key: 'name',             label: 'Line Item',          num: false },
@@ -342,7 +344,8 @@ const MEASURE_COLS = [
   { key: 'deemedMmbtu',      label: 'Deemed MMBTU',       num: true,  group: 'deemed' },
   { key: 'calcKwh',          label: 'Calculated kWh',     num: true  },
   { key: 'calcTherms',       label: 'Calculated Therms',  num: true  },
-  { key: 'calcMmbtu',        label: 'Calculated MMBTU',   num: true  }
+  { key: 'calcMmbtu',        label: 'Calculated MMBTU',   num: true  },
+  { key: 'yearlyCostSavings', label: 'Yearly Energy Cost Savings', num: true }
 ];
 
 function activeMeasureCols() {
@@ -419,6 +422,20 @@ function getReportingContext() {
     basisLabel = `Below 5% (${pct.toFixed(1)}%) — review`; basisClass = 'basis-warn';
   }
   return { pct, tier, tierLabel, basisLabel, basisClass };
+}
+
+// Yearly Energy Cost Savings ($/yr): rebatesIncentives metadata key "totalSavings",
+// falling back to the job's totals.totalSavings.
+function getYearlyCostSavings(data) {
+  try {
+    const ri = (data.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
+    if (ri && ri.metadataJSON) {
+      const meta = JSON.parse(ri.metadataJSON);
+      const row = meta.find(m => m.key === 'totalSavings');
+      if (row) { const n = num(row.value); if (n != null) return n; }
+    }
+  } catch(_) {}
+  return num(data?.totals?.totalSavings);
 }
 
 // Compute per-row Calculated value (kWh/Therms/MMBTU) by tier:
@@ -548,10 +565,16 @@ async function fetchMeasures(rawIds) {
       combinedData = data;
       // Derive tier per-job so multi-job rows are stamped independently
       lastData = data;
-      const jobTier = getReportingContext().tier;
+      const { pct: jobPct, tier: jobTier } = getReportingContext();
+      const stageId = data?.job?.stageId ?? data?.stageId;
+      const jobStage = stageId != null ? (STAGE_LABELS[stageId] ?? `Stage ${stageId}`) : '';
+      const jobCostSavings = getYearlyCostSavings(data);
       const rows = flattenMeasures(data);
       rows.forEach(r => {
         r.jobId = jobId;
+        r.stage = jobStage;
+        r.savingsPct = jobPct;
+        r.yearlyCostSavings = jobCostSavings;
         r.calcKwh    = calcRowEnergy(r.savedKwh,   r.deemedKwh,    jobTier);
         r.calcTherms = calcRowEnergy(r.savedTherms, r.deemedTherms, jobTier);
         r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  jobTier);
