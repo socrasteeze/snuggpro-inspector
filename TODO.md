@@ -128,16 +128,16 @@ identical** in both run modes — only **how you launch** differs.
 
 ## Open questions from the code review (need live data to settle)
 
-- [ ] **Confirm the units of "Yearly Energy Cost Savings."** `getYearlyCostSavings()` prefers
-      the `totalSavings` key inside the `deemedAndModeledKwhSavings` incentive's `metadataJSON`,
-      and falls back to `totals.totalSavings` (swagger: "the total cost of energy saved by the
-      improved home per year" — dollars). The metadata key is **not in swagger.json**, and it
-      hangs off a *kWh-savings* incentive whose only other known key
-      (`combinedTotalEnergySavings`) is an energy percentage. If that key turns out to be kWh
-      or a lifetime figure, the column mixes units row-to-row with nothing on screen to show it.
-      Check job **332046** against its SnuggPro report: if the metadata value ≈ the combined
-      **967.82 kWh** it is energy, not dollars — drop the metadata source and use
-      `totals.totalSavings` alone.
+- [x] **Confirm the units of "Yearly Energy Cost Savings."** Checked against job **332046**:
+      the `totalSavings` key inside the `deemedAndModeledKwhSavings` incentive's `metadataJSON`
+      was energy (kWh), not dollars — it matched the combined 967.82 kWh figure, not a
+      plausible dollar amount. Dropped that source; `getYearlyCostSavings()` now reads
+      `totals.totalSavings` alone (swagger: "the total cost of energy saved by the improved
+      home per year", dollars — modeled only, same scope as `installedCosts`, which is
+      documented "excluding direct installs"). Note this means the column undercounts jobs
+      with a large deemed (direct-install) share, since `totals` doesn't see those savings —
+      that's a real gap, not a bug, and there's no documented field that reports combined
+      modeled+deemed dollars to fall back to.
 - [ ] **Decide whether recommendation savings should be split across line items.**
       `flattenMeasures()` copies each recommendation's `savedKwh` / `savedTherms` / `savedMbtu`
       / `savings` / `sir` onto **every** one of its `detailedCosts` line items. A measure billed

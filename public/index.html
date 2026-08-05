@@ -471,15 +471,14 @@ function getReportingContext(data) {
   return { pct, tier, tierLabel, basisLabel, basisClass };
 }
 
-// Yearly Energy Cost Savings ($/yr): rebatesIncentives metadata key "totalSavings",
-// falling back to the job's totals.totalSavings (swagger: "the total cost of energy
-// saved by the improved home per year", dollars).
-// NOTE: the metadata key is undocumented and sits on a kWh-savings incentive whose
-// only other known key is an energy percentage, so confirm against live data that it
-// really is dollars/yr — if it isn't, the two sources report different units into one
-// column. See TODO.md.
+// Yearly Energy Cost Savings ($/yr): job's totals.totalSavings (swagger: "the total
+// cost of energy saved by the improved home per year", dollars — modeled savings only,
+// same scope as totals.installedCosts which is documented "excluding direct installs").
+// Was previously read from rebatesIncentives metadata first; verified against job
+// 332046 that the metadata value was actually kWh, not dollars, so that source is
+// dropped and this is the only one now.
 function getYearlyCostSavings(data) {
-  return metaNum(data, 'totalSavings') ?? num(data?.totals?.totalSavings);
+  return num(data?.totals?.totalSavings);
 }
 
 // Compute per-row Calculated value (kWh/Therms/MMBTU) by tier:
