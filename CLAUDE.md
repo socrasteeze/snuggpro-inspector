@@ -60,6 +60,29 @@ Rules that MUST hold (each was a real correction — do not regress them):
 
 Validation reference (job 332046, Bissonette): combined 967.82 kWh = 538.69 modeled + 429.13 deemed. (Job 355981, Goehring): combined 1351.32 kWh, 107.07 therms, 16.65% savings (borderline, flags modeled).
 
+### Conventions the measures/usage code relies on
+- **Job payloads are passed as arguments, never read from `lastData`.** `getReportingContext(data)`,
+  `getYearlyCostSavings(data)`, `stageLabel(data)` and `stampCalcColumns(row, tier)` all take what
+  they need. `lastData` is only the backing store for the raw-JSON pane and its Copy button —
+  reading it for reporting values lets one view's fetch silently repoint another view's numbers.
+- **Read the incentive metadata through `metaNum(data, key)`.** It goes through `num()`, so `''`,
+  `null` and non-numeric strings all collapse to `null`. Raw `Number()` turns `''` into `0` and
+  `'N/A'` into `NaN`, and both survive a `== null` check — they reach the table and the CSV as a
+  fabricated reading, and `NaN` additionally makes the column's sort comparator a silent no-op.
+- **`MEASURE_COLS` flags carry column policy.** `job: true` = a per-job fact repeated on every row
+  of that job; those are excluded from `TOTAL_KEYS` because summing them would report the figure
+  multiplied by the line-item count. `farmworker: true` = Region 1/2 only; `noFarmworker: true` =
+  hidden on Region 1/2 (used for the tier-basis `savingsPct`, which those programs don't use —
+  same reason `buildCombinedSummary` hides the basis/tier badges there).
+- **Anything from the API goes through `esc()` before it lands in an `innerHTML` string or in the
+  XLSX sheet XML** — measure titles, line-item names, stage ids and units are free-form SnuggPro
+  fields, and on the hosted Worker the page shares an origin with the session cookie.
+- **Multi-job fetches go through `fetchJobsAllData(jobIds)`**, which loads up to
+  `JOB_FETCH_CONCURRENCY` jobs at once and returns `{ data, errors }` index-aligned with the input.
+  Don't reintroduce a per-job `await` loop.
+- Sidebar `.nav-item` buttons without a `data-path` (Export XLSX) are action buttons: the delegated
+  nav handler returns early for them, so they don't blank `currentPath` or steal the active view.
+
 ### Field-access conventions in the HTML
 - All displayed numbers round only for display (`toFixed(2)`); the raw full-precision value is what gets copied to clipboard and exported to CSV. Keep that split — reporting needs full precision.
 - Cells copy on click via `copyCell()` using a `data-copy` attribute holding the raw value.

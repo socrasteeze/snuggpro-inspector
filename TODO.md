@@ -126,6 +126,32 @@ identical** in both run modes — only **how you launch** differs.
 - [ ] Login email actually arrives (check spam the first time).
 - [ ] Rotate the SnuggPro key after confirming everything works (Step 9).
 
+## Open questions from the code review (need live data to settle)
+
+- [ ] **Confirm the units of "Yearly Energy Cost Savings."** `getYearlyCostSavings()` prefers
+      the `totalSavings` key inside the `deemedAndModeledKwhSavings` incentive's `metadataJSON`,
+      and falls back to `totals.totalSavings` (swagger: "the total cost of energy saved by the
+      improved home per year" — dollars). The metadata key is **not in swagger.json**, and it
+      hangs off a *kWh-savings* incentive whose only other known key
+      (`combinedTotalEnergySavings`) is an energy percentage. If that key turns out to be kWh
+      or a lifetime figure, the column mixes units row-to-row with nothing on screen to show it.
+      Check job **332046** against its SnuggPro report: if the metadata value ≈ the combined
+      **967.82 kWh** it is energy, not dollars — drop the metadata source and use
+      `totals.totalSavings` alone.
+- [ ] **Decide whether recommendation savings should be split across line items.**
+      `flattenMeasures()` copies each recommendation's `savedKwh` / `savedTherms` / `savedMbtu`
+      / `savings` / `sir` onto **every** one of its `detailedCosts` line items. A measure billed
+      as separate "Labor" and "Material" lines therefore contributes its savings **twice** to the
+      TOTAL row and to the Combined kWh/Therms/MMBTU cards. This is long-standing behaviour, not
+      new — job 332046 validates at 967.82 kWh, so its active measures evidently have one line
+      item each. Confirm against a job whose recommendations have multiple line items; if the
+      totals inflate, the fix is to attribute savings to the first line item only (or split it),
+      and the validation reference numbers need re-checking afterwards.
+- [ ] **XLSX export omits Stage and Yearly Energy Cost Savings.** The workbook's sheet layout is
+      fixed by `template_range.xlsx` (18 measure columns, matched by position), so the two new
+      columns appear in the table and the CSV but not in the workbook. Savings % is already on
+      sheet1. Adding the other two means editing the template first.
+
 ## Backlog / enhancements
 - [ ] **Measures export: add a per-row program tier** (Plus vs Deep). Each row should show
       whether the job is on the Plus or Deep tier, and it should carry through to the CSV/XLSX

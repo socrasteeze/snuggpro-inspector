@@ -249,6 +249,10 @@ function proxyUrl(apiPath) {
 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
+    // Action buttons (Export XLSX) carry no data-path — they run their own onclick.
+    // Without this guard they'd blank currentPath, steal the active highlight from
+    // the current view, and throw in resolvedPath() on the follow-up doFetch().
+    if (!btn.dataset.path) return;
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentPath = btn.dataset.path;
@@ -318,13 +322,24 @@ async function doFetch() {
 let measureRows = [];
 let sortKey = null;
 let sortDir = 1;
-let currentTier = null; // 'deep' | 'plus' | 'review' | null
 let savedDeemedCollapsed = false;
+// Reporting context captured at fetch time, for the single-job summary panel.
+// Held here rather than re-derived from lastData at render time: lastData is a
+// mutable global that other views reassign, which would let the summary describe
+// a different job than the rows below it.
+let measuresCtx = null;
 
+// job: true marks a per-job fact copied onto every row of that job. Those columns
+//   are never summed in the TOTAL row — adding them there would multiply a job-level
+//   figure by its line-item count.
+// farmworker: true   → only shown on Region 1 / Region 2 (Farmworker) programs.
+// noFarmworker: true → hidden on those programs. savingsPct is the tier-basis
+//   percentage, and Farmworker programs use SIR instead of tier-based savings, so
+//   it stays hidden there for the same reason buildCombinedSummary hides the badges.
 const MEASURE_COLS = [
   { key: 'jobId',            label: 'Job',                num: false },
-  { key: 'stage',            label: 'Stage',              num: false },
-  { key: 'savingsPct',       label: 'Total Combined Energy Savings %', num: true },
+  { key: 'stage',            label: 'Stage',              num: false, job: true },
+  { key: 'savingsPct',       label: 'Total Combined Energy Savings %', num: true, job: true, noFarmworker: true },
   { key: 'measure',          label: 'Measure',            num: false },
   { key: 'source',           label: 'Src',                num: false },
   { key: 'name',             label: 'Line Item',          num: false },
@@ -345,14 +360,23 @@ const MEASURE_COLS = [
   { key: 'calcKwh',          label: 'Calculated kWh',     num: true  },
   { key: 'calcTherms',       label: 'Calculated Therms',  num: true  },
   { key: 'calcMmbtu',        label: 'Calculated MMBTU',   num: true  },
-  { key: 'yearlyCostSavings', label: 'Yearly Energy Cost Savings', num: true }
+  { key: 'yearlyCostSavings', label: 'Yearly Energy Cost Savings', num: true, job: true }
 ];
 
 function activeMeasureCols() {
-  return isFarmworkerProgram() ? MEASURE_COLS : MEASURE_COLS.filter(c => !c.farmworker);
+  return isFarmworkerProgram()
+    ? MEASURE_COLS.filter(c => !c.noFarmworker)
+    : MEASURE_COLS.filter(c => !c.farmworker);
 }
 
 function num(v) { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; }
+
+// Escape API-supplied text before it goes into an innerHTML string or the XLSX's
+// sheet XML. Job titles, line-item names and stage ids are free-form SnuggPro
+// fields; on the hosted Worker the page shares an origin with the session cookie.
+function esc(v) {
+  return String(v).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+}
 
 const STAGE_LABELS = {
   1:'Lead', 2:'Audit', 3:'Bid Proposed', 4:'Bid Approved',
@@ -394,18 +418,41 @@ function classifyHvac(data) {
   return '';
 }
 
-// Derive savings % and program tier from rebatesIncentives metadata on lastData.
-// Returns { pct, tier, tierLabel, basisLabel, basisClass }
-function getReportingContext() {
-  let pct = null;
+// The "deemedAndModeledKwhSavings" incentive carries a metadataJSON blob — a JSON
+// array of {key, value}. Both the reporting basis % and the yearly cost savings are
+// read out of it, so the find/parse/find lives here once. Returns [] on any
+// malformed or missing input; metaNum() then yields null, which every caller treats
+// as "not available" rather than as a number.
+function incentiveMeta(data) {
   try {
-    const ri = (lastData.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
+    const ri = (data?.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
     if (ri && ri.metadataJSON) {
       const meta = JSON.parse(ri.metadataJSON);
-      const row = meta.find(m => m.key === 'combinedTotalEnergySavings');
-      if (row) pct = Number(row.value);
+      if (Array.isArray(meta)) return meta;
     }
   } catch(_) {}
+  return [];
+}
+
+// Always coerce through num(), so ''/null/non-numeric all collapse to null.
+// Raw Number() would turn '' into 0 and 'N/A' into NaN, and both survive a
+// `== null` check — they'd reach the table and the CSV as a fabricated reading.
+function metaNum(data, key) {
+  const row = incentiveMeta(data).find(m => m.key === key);
+  return row ? num(row.value) : null;
+}
+
+// Job stage label, e.g. "Retrofit Complete". '' when the job carries no stage.
+function stageLabel(data) {
+  const id = data?.job?.stageId ?? data?.stageId;
+  if (id === null || id === undefined || id === '') return '';
+  return STAGE_LABELS[id] ?? `Stage ${id}`;
+}
+
+// Derive savings % and program tier from a job's rebatesIncentives metadata.
+// Returns { pct, tier, tierLabel, basisLabel, basisClass }
+function getReportingContext(data) {
+  const pct = metaNum(data, 'combinedTotalEnergySavings');
 
   let tier, tierLabel, basisLabel, basisClass;
   if (pct == null) {
@@ -425,17 +472,14 @@ function getReportingContext() {
 }
 
 // Yearly Energy Cost Savings ($/yr): rebatesIncentives metadata key "totalSavings",
-// falling back to the job's totals.totalSavings.
+// falling back to the job's totals.totalSavings (swagger: "the total cost of energy
+// saved by the improved home per year", dollars).
+// NOTE: the metadata key is undocumented and sits on a kWh-savings incentive whose
+// only other known key is an energy percentage, so confirm against live data that it
+// really is dollars/yr — if it isn't, the two sources report different units into one
+// column. See TODO.md.
 function getYearlyCostSavings(data) {
-  try {
-    const ri = (data.rebatesIncentives || []).find(x => x.code === 'deemedAndModeledKwhSavings');
-    if (ri && ri.metadataJSON) {
-      const meta = JSON.parse(ri.metadataJSON);
-      const row = meta.find(m => m.key === 'totalSavings');
-      if (row) { const n = num(row.value); if (n != null) return n; }
-    }
-  } catch(_) {}
-  return num(data?.totals?.totalSavings);
+  return metaNum(data, 'totalSavings') ?? num(data?.totals?.totalSavings);
 }
 
 // Compute per-row Calculated value (kWh/Therms/MMBTU) by tier:
@@ -448,14 +492,13 @@ function calcRowEnergy(savedVal, deemedVal, tier) {
   return deemedVal != null ? deemedVal : savedVal;
 }
 
-// Stamp calcKwh / calcTherms / calcMmbtu onto every row in measureRows.
-// Call this after measureRows is populated and currentTier is set.
-function stampCalcColumns() {
-  measureRows.forEach(r => {
-    r.calcKwh    = calcRowEnergy(r.savedKwh,    r.deemedKwh,    currentTier);
-    r.calcTherms = calcRowEnergy(r.savedTherms,  r.deemedTherms, currentTier);
-    r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,   r.deemedMmbtu,  currentTier);
-  });
+// Stamp the tier-derived Calculated columns onto one row. Tier is per-job, so it is
+// always passed in — never read from a global, which would apply the last-fetched
+// job's tier to every row of a multi-job table.
+function stampCalcColumns(r, tier) {
+  r.calcKwh    = calcRowEnergy(r.savedKwh,    r.deemedKwh,    tier);
+  r.calcTherms = calcRowEnergy(r.savedTherms, r.deemedTherms, tier);
+  r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  tier);
 }
 
 function flattenMeasures(data) {
@@ -534,6 +577,41 @@ function parseJobIds(raw) {
   return [...new Set(raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean))];
 }
 
+// How many /jobs/{id}/all-data requests to keep in flight. The jobs are
+// independent, so fetching them one at a time made a 10-job batch take 10x
+// longer than it needs to; capped so a large batch doesn't stampede the API.
+const JOB_FETCH_CONCURRENCY = 6;
+
+// Load /jobs/{id}/all-data for every id. Returns { data, errors }: `data` is
+// index-aligned with jobIds (null where the job failed) and `errors` is in
+// jobIds order regardless of which response landed first.
+async function fetchJobsAllData(jobIds) {
+  const data = new Array(jobIds.length).fill(null);
+  const errs = new Array(jobIds.length).fill(null);
+  let next = 0;
+
+  async function worker() {
+    while (next < jobIds.length) {
+      const i = next++;
+      const jobId = jobIds[i];
+      try {
+        const res = await fetch(proxyUrl(`/jobs/${jobId}/all-data`));
+        const text = await res.text();
+        let parsed;
+        try { parsed = JSON.parse(text); } catch(_) { parsed = null; }
+        if (!res.ok || !parsed) errs[i] = `Job ${jobId}: ${res.status} ${res.statusText}`;
+        else data[i] = parsed;
+      } catch(_) {
+        errs[i] = `Job ${jobId}: network error`;
+      }
+    }
+  }
+
+  const lanes = Math.min(JOB_FETCH_CONCURRENCY, jobIds.length);
+  await Promise.all(Array.from({ length: lanes }, worker));
+  return { data, errors: errs.filter(Boolean) };
+}
+
 async function fetchMeasures(rawIds) {
   const jobIds = parseJobIds(rawIds);
   if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
@@ -547,58 +625,43 @@ async function fetchMeasures(rawIds) {
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
   setView('friendly');
 
-  const errors = [];
-  const allRows = [];
-  let combinedData = null; // lastData = last successful job's data (for summary pct)
+  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
 
-  for (const jobId of jobIds) {
-    const url = proxyUrl(`/jobs/${jobId}/all-data`);
-    try {
-      const res = await fetch(url);
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch(_) { data = null; }
-      if (!res.ok || !data) {
-        errors.push(`Job ${jobId}: ${res.status} ${res.statusText}`);
-        continue;
-      }
-      combinedData = data;
-      // Derive tier per-job so multi-job rows are stamped independently
-      lastData = data;
-      const { pct: jobPct, tier: jobTier } = getReportingContext();
-      const stageId = data?.job?.stageId ?? data?.stageId;
-      const jobStage = stageId != null ? (STAGE_LABELS[stageId] ?? `Stage ${stageId}`) : '';
-      const jobCostSavings = getYearlyCostSavings(data);
-      const rows = flattenMeasures(data);
-      rows.forEach(r => {
-        r.jobId = jobId;
-        r.stage = jobStage;
-        r.savingsPct = jobPct;
-        r.yearlyCostSavings = jobCostSavings;
-        r.calcKwh    = calcRowEnergy(r.savedKwh,   r.deemedKwh,    jobTier);
-        r.calcTherms = calcRowEnergy(r.savedTherms, r.deemedTherms, jobTier);
-        r.calcMmbtu  = calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  jobTier);
-      });
-      allRows.push(...rows);
-    } catch(e) {
-      errors.push(`Job ${jobId}: network error`);
-    }
-  }
+  const allRows = [];
+  let combinedData = null; // last successful job's data — backs the raw JSON pane
+
+  jobIds.forEach((jobId, i) => {
+    const data = jobData[i];
+    if (!data) return;
+    combinedData = data;
+    // Derive the context per-job so multi-job rows are stamped independently
+    const ctx = getReportingContext(data);
+    const jobStage = stageLabel(data);
+    const jobCostSavings = getYearlyCostSavings(data);
+    const rows = flattenMeasures(data);
+    rows.forEach(r => {
+      r.jobId = jobId;
+      r.stage = jobStage;
+      r.savingsPct = ctx.pct;
+      r.yearlyCostSavings = jobCostSavings;
+      stampCalcColumns(r, ctx.tier);
+    });
+    allRows.push(...rows);
+  });
 
   if (allRows.length === 0) {
     setBadge('err', 'No data');
     document.getElementById('friendly-view').innerHTML =
-      `<div class="err-block">${errors.join('<br/>') || 'No data returned. Check the Job ID and selected program.'}</div>`;
+      `<div class="err-block">${errors.map(esc).join('<br/>') || 'No data returned. Check the Job ID and selected program.'}</div>`;
     return;
   }
 
   lastData = combinedData;
   document.getElementById('rawPre').textContent = JSON.stringify(combinedData, null, 2);
   measureRows = allRows;
-  // currentTier is only used by buildCombinedSummary for the single-job basis badge;
-  // for multi-job it reflects the last job fetched (used for display only, not row stamping)
-  currentTier = getReportingContext().tier;
-  // stampCalcColumns() already done per-job above; skip it here
+  // Capture the summary context now, against the job actually on screen, so later
+  // re-renders (sort, collapse) can't pick up a different job's numbers.
+  measuresCtx = { ...getReportingContext(combinedData), stage: stageLabel(combinedData) };
   sortKey = null;
   const errNote = errors.length ? ` · ${errors.length} failed` : '';
   setBadge(errors.length ? 'err' : 'ok', `${measureRows.length} line items${errNote}`);
@@ -621,15 +684,13 @@ function buildCombinedSummary() {
 
   let h = '<div class="combined-summary">';
 
-  if (!multi) {
-    const stageId = lastData?.job?.stageId ?? lastData?.stageId;
-    const stageLabel = stageId != null ? (STAGE_LABELS[stageId] ?? `Stage ${stageId}`) : null;
+  if (!multi && measuresCtx) {
+    const { stage, tier, tierLabel, basisLabel, basisClass } = measuresCtx;
     const farmworker = isFarmworkerProgram();
-    const { tier, tierLabel, basisLabel, basisClass } = getReportingContext();
     const tierBadgeClass = tier === 'deep' ? 'basis-saved' : tier === 'plus' ? 'basis-deemed' : 'basis-warn';
 
     h += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">`;
-    if (stageLabel) h += `<div class="csum-basis" style="margin-bottom:0;background:#f0f0f0;color:#444">Stage: <strong>${stageLabel}</strong></div>`;
+    if (stage) h += `<div class="csum-basis" style="margin-bottom:0;background:#f0f0f0;color:#444">Stage: <strong>${esc(stage)}</strong></div>`;
     if (!farmworker) {
       h += `<div class="csum-basis ${basisClass}" style="margin-bottom:0">Reporting basis: <strong>${basisLabel}</strong></div>`;
       h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Customer tier: <strong>${tierLabel}</strong></div>`;
@@ -647,6 +708,13 @@ function buildCombinedSummary() {
   return h;
 }
 
+// Columns the TOTAL row sums. Job-scoped columns (job: true in MEASURE_COLS) are
+// deliberately absent: their value is a per-job constant repeated on every row, so
+// summing it would report the figure multiplied by the line-item count.
+const TOTAL_KEYS = ['quantity', 'lineCost', 'yrSavings', 'lifetimeSavings',
+  'savedKwh', 'savedTherms', 'savedMmbtu', 'deemedKwh', 'deemedTherms', 'deemedMmbtu',
+  'calcKwh', 'calcTherms', 'calcMmbtu'];
+
 function renderMeasures() {
   const rows = [...measureRows];
   if (sortKey) {
@@ -659,14 +727,20 @@ function renderMeasures() {
     });
   }
 
-  // Totals
-  const tot = { quantity:0, lineCost:0, yrSavings:0, lifetimeSavings:0, savedKwh:0, savedTherms:0, savedMmbtu:0, deemedKwh:0, deemedTherms:0, deemedMmbtu:0, calcKwh:0, calcTherms:0, calcMmbtu:0 };
-  rows.forEach(r => Object.keys(tot).forEach(k => { if (typeof r[k] === 'number') tot[k] += r[k]; }));
+  // Totals, source counts and the distinct-job set — one pass over the rows.
+  const tot = {};
+  TOTAL_KEYS.forEach(k => { tot[k] = 0; });
+  const jobSet = new Set();
+  let recCount = 0, diCount = 0;
+  rows.forEach(r => {
+    for (const k of TOTAL_KEYS) { if (typeof r[k] === 'number') tot[k] += r[k]; }
+    if (r.jobId) jobSet.add(r.jobId);
+    if (r.source === 'rec') recCount++; else if (r.source === 'DI') diCount++;
+  });
 
-  const jobSet = [...new Set(rows.map(r => r.jobId).filter(Boolean))];
-  const jobNote = jobSet.length > 1 ? ` · <strong>${jobSet.length}</strong> jobs` : '';
+  const jobNote = jobSet.size > 1 ? ` · <strong>${jobSet.size}</strong> jobs` : '';
   let html = '<div class="measures-toolbar">';
-  html += `<span class="summary"><strong>${rows.length}</strong> line items${jobNote} · <span class="src-rec">REC</span> ${rows.filter(r=>r.source==='rec').length} · <span class="src-di">DI</span> ${rows.filter(r=>r.source==='DI').length}</span>`;
+  html += `<span class="summary"><strong>${rows.length}</strong> line items${jobNote} · <span class="src-rec">REC</span> ${recCount} · <span class="src-di">DI</span> ${diCount}</span>`;
   html += '<div class="spacer"></div>';
   const collapseLabel = savedDeemedCollapsed ? 'Show Saved/Deemed' : 'Hide Saved/Deemed';
   html += `<button class="tool-btn${savedDeemedCollapsed ? ' active' : ''}" onclick="toggleSavedDeemed()">${collapseLabel}</button>`;
@@ -705,21 +779,26 @@ function renderMeasures() {
         html += `<td class="${cls}"${copyAttr}>${display}</td>`;
       } else {
         const measureCls = c.key === 'measure' ? 'measure-cell' : '';
-        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${String(v).replace(/"/g,'&quot;')}" onclick="copyCell(this)" title="Click to copy"`;
+        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${esc(v)}" onclick="copyCell(this)" title="Click to copy"`;
         const copyable = (v != null && v !== '') ? 'copyable' : '';
         const cls = [measureCls, grpCls, copyable].filter(Boolean).join(' ');
-        html += `<td${cls ? ` class="${cls}"` : ''}${copyAttr}>${v == null ? '' : v}</td>`;
+        html += `<td${cls ? ` class="${cls}"` : ''}${copyAttr}>${v == null ? '' : esc(v)}</td>`;
       }
     });
     html += '</tr>';
   });
 
-  // Totals row (SIR is a ratio — not summed)
+  // Totals row. SIR is a ratio and job-scoped columns are per-job constants —
+  // neither is summable, so both render blank.
   html += '<tr style="border-top:2px solid #ddd;font-weight:600;background:#fafafa">';
   cols.forEach(c => {
     const grpCls = colGroup(c);
     if (c.key === 'measure') { html += '<td class="measure-cell">TOTAL</td>'; return; }
-    if (c.key === 'sir') { html += `<td class="${['num', grpCls].filter(Boolean).join(' ')}"></td>`; return; }
+    if (c.key === 'sir' || c.job) {
+      const cls = [c.num || c.key === 'sir' ? 'num' : '', grpCls].filter(Boolean).join(' ');
+      html += `<td${cls ? ` class="${cls}"` : ''}></td>`;
+      return;
+    }
     if (c.num && tot[c.key] !== undefined) {
       const v = tot[c.key];
       const display = Number.isInteger(v) ? v : v.toFixed(2);
@@ -888,34 +967,24 @@ async function fetchUsageBilling(rawIds) {
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
   setView('friendly');
 
-  const errors = [];
+  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
+
   const allRows = [];
   let lastUtilities = null;
 
-  for (const jobId of jobIds) {
-    const url = proxyUrl(`/jobs/${jobId}/all-data`);
-    try {
-      const res = await fetch(url);
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch(_) { data = null; }
-      if (!res.ok || !data) {
-        errors.push(`Job ${jobId}: ${res.status} ${res.statusText}`);
-        continue;
-      }
-      if (data.utilities) lastUtilities = data.utilities;
-      const rows = flattenUsage(data);
-      rows.forEach(r => { r.jobId = jobId; });
-      allRows.push(...rows);
-    } catch(e) {
-      errors.push(`Job ${jobId}: network error`);
-    }
-  }
+  jobIds.forEach((jobId, i) => {
+    const data = jobData[i];
+    if (!data) return;
+    if (data.utilities) lastUtilities = data.utilities;
+    const rows = flattenUsage(data);
+    rows.forEach(r => { r.jobId = jobId; });
+    allRows.push(...rows);
+  });
 
   if (allRows.length === 0) {
     setBadge('err', 'No data');
     document.getElementById('friendly-view').innerHTML =
-      `<div class="err-block">${errors.join('<br/>') || 'No periodic utility bills found for this job (it may use Simple/No-Bills entry).'}</div>`;
+      `<div class="err-block">${errors.map(esc).join('<br/>') || 'No periodic utility bills found for this job (it may use Simple/No-Bills entry).'}</div>`;
     return;
   }
 
@@ -977,8 +1046,8 @@ function renderUsage() {
         const copyAttr = v == null ? '' : ` data-copy="${v}" onclick="copyCell(this)" title="Click to copy"`;
         html += `<td class="num"${copyAttr}>${disp}</td>`;
       } else {
-        const disp = v == null ? '' : String(v);
-        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${String(v).replace(/"/g, '&quot;')}" onclick="copyCell(this)"`;
+        const disp = v == null ? '' : esc(v);
+        const copyAttr = (v == null || v === '') ? '' : ` data-copy="${esc(v)}" onclick="copyCell(this)"`;
         html += `<td${copyAttr}>${disp}</td>`;
       }
     });
@@ -1115,10 +1184,6 @@ function colIdxToLetter(idx) {
   return String.fromCharCode(64 + Math.floor(idx / 26)) + String.fromCharCode(65 + (idx % 26));
 }
 
-function xmlEsc(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function buildRowXml(rowNum, values) {
   let xml = `<row r="${rowNum}" spans="1:${values.length}">`;
   values.forEach((val, i) => {
@@ -1127,7 +1192,7 @@ function buildRowXml(rowNum, values) {
     if (typeof val === 'number') {
       xml += `<c r="${ref}"><v>${val}</v></c>`;
     } else {
-      xml += `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
+      xml += `<c r="${ref}" t="inlineStr"><is><t>${esc(val)}</t></is></c>`;
     }
   });
   return xml + '</row>';
@@ -1195,7 +1260,7 @@ function patchTableXml(tableXml, newRef, columnNames) {
     .replace(/(<autoFilter\b[^>]* ref=")[^"]*(")/,  `$1${newRef}$2`);
   if (columnNames && columnNames.length) {
     const colsXml = columnNames.map((n, i) =>
-      `<tableColumn id="${i + 1}" name="${xmlEsc(n || ('Column' + (i + 1)))}"/>`
+      `<tableColumn id="${i + 1}" name="${esc(n || ('Column' + (i + 1)))}"/>`
     ).join('');
     out = out.replace(/<tableColumns[\s\S]*?<\/tableColumns>/,
       `<tableColumns count="${columnNames.length}">${colsXml}</tableColumns>`);
@@ -1217,53 +1282,49 @@ async function exportXlsx() {
     tplBuf = await tplRes.arrayBuffer();
   } catch(e) { alert('Could not load template.'); setBadge('err', 'Template error'); return; }
 
-  const mainOut = [], measuresOut = [], elecOut = [], gasOut = [], errors = [];
+  const mainOut = [], measuresOut = [], elecOut = [], gasOut = [];
+  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
 
-  for (const jobId of jobIds) {
-    try {
-      const res = await fetch(proxyUrl(`/jobs/${jobId}/all-data`));
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch(_) { data = null; }
-      if (!res.ok || !data) { errors.push(`Job ${jobId}: ${res.status}`); continue; }
+  jobIds.forEach((jobId, i) => {
+    const data = jobData[i];
+    if (!data) return;
 
-      lastData = data;
-      const { pct, tier } = getReportingContext();
-      const jobMeasureRows = flattenMeasures(data);
+    // Note: lastData is deliberately NOT reassigned here. The Measures table and its
+    // summary panel may be on screen for a different job; repointing the global made
+    // the summary describe this job instead on the next re-render.
+    const { pct, tier } = getReportingContext(data);
 
-      // Sheet1: AuditId, Path, Savings %, TypeOfHome, HVAC
-      const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
-      const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
-      mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome, classifyHvac(data)]);
+    // Sheet1: AuditId, Path, Savings %, TypeOfHome, HVAC
+    const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
+    const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
+    mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome, classifyHvac(data)]);
 
-      // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
-      // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
-      // Deemed kWh,Deemed Therms,Deemed MMBTU,SavedkWh,SavedTherms,SavedMBTUs
-      jobMeasureRows.forEach(r => {
-        measuresOut.push([
-          jobId, r.measure, r.source, r.name, r.code,
-          r.quantity, r.unit, r.costPerUnit, r.lineCost,
-          r.savedKwh, r.savedTherms, r.savedMmbtu,
-          r.deemedKwh, r.deemedTherms, r.deemedMmbtu,
-          calcRowEnergy(r.savedKwh,    r.deemedKwh,    tier),
-          calcRowEnergy(r.savedTherms, r.deemedTherms, tier),
-          calcRowEnergy(r.savedMmbtu,  r.deemedMmbtu,  tier)
-        ]);
-      });
+    // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
+    // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
+    // Deemed kWh,Deemed Therms,Deemed MMBTU,SavedkWh,SavedTherms,SavedMBTUs
+    // The sheet layout is fixed by the template, so the Stage and Yearly Energy Cost
+    // Savings columns shown in the table and CSV are not carried here.
+    flattenMeasures(data).forEach(r => {
+      stampCalcColumns(r, tier);
+      measuresOut.push([
+        jobId, r.measure, r.source, r.name, r.code,
+        r.quantity, r.unit, r.costPerUnit, r.lineCost,
+        r.savedKwh, r.savedTherms, r.savedMmbtu,
+        r.deemedKwh, r.deemedTherms, r.deemedMmbtu,
+        r.calcKwh, r.calcTherms, r.calcMmbtu
+      ]);
+    });
 
-      // Column order: table3 = AuditId,Fuel,ElectricBillStartDate,ElectricBillEndDate,Billed Days,ElectricMonthkWhUsage,Units,MMBTU
-      // Column order: table4 = AuditId,Fuel,GasBillStartDate,Gas End,GasBilledDays,GasMonthThermsUsage,Units,MMBTU
-      flattenUsage(data).forEach(r => {
-        if (r.fuel === 'Electric') {
-          elecOut.push([jobId, 'Electric', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
-        } else if (r.fuel === 'Gas') {
-          gasOut.push([jobId, 'Gas', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
-        }
-      });
-    } catch(e) {
-      errors.push(`Job ${jobId}: network error`);
-    }
-  }
+    // Column order: table3 = AuditId,Fuel,ElectricBillStartDate,ElectricBillEndDate,Billed Days,ElectricMonthkWhUsage,Units,MMBTU
+    // Column order: table4 = AuditId,Fuel,GasBillStartDate,Gas End,GasBilledDays,GasMonthThermsUsage,Units,MMBTU
+    flattenUsage(data).forEach(r => {
+      if (r.fuel === 'Electric') {
+        elecOut.push([jobId, 'Electric', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
+      } else if (r.fuel === 'Gas') {
+        gasOut.push([jobId, 'Gas', r.startDate, r.endDate, r.billedDays, r.usage, r.units, r.mmbtu]);
+      }
+    });
+  });
 
   // Open template ZIP and patch sheets; strip all Excel tables to avoid repair errors
   const zip = await JSZip.loadAsync(tplBuf);
