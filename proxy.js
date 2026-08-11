@@ -24,7 +24,7 @@ const PROGRAMS = {
   sdge:    { name: 'SDGE – Whole Home Program',       pub: process.env.SDGE_PUBLIC_KEY,    priv: process.env.SDGE_PRIVATE_KEY },
   sce:     { name: 'SCE/SCG ESA Whole Home',          pub: process.env.SCE_PUBLIC_KEY,     priv: process.env.SCE_PRIVATE_KEY },
 };
-const DEFAULT_PROGRAM = 'region1';
+const DEFAULT_PROGRAM = 'sce';
 
 const missingKeys = Object.entries(PROGRAMS).filter(([, p]) => !p.pub || !p.priv).map(([k]) => k);
 if (missingKeys.length === Object.keys(PROGRAMS).length) {

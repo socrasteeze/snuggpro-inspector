@@ -25,7 +25,7 @@ const PROGRAMS = (env) => ({
   sdge:    { name: 'SDGE – Whole Home Program',       pub: env.SDGE_PUBLIC_KEY,    priv: env.SDGE_PRIVATE_KEY },
   sce:     { name: 'SCE/SCG ESA Whole Home',          pub: env.SCE_PUBLIC_KEY,     priv: env.SCE_PRIVATE_KEY },
 });
-const DEFAULT_PROGRAM = 'region1';
+const DEFAULT_PROGRAM = 'sce';
 const OTP_TTL_MS = 10 * 60 * 1000;          // code valid 10 minutes
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // session valid 30 days
 

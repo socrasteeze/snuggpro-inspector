@@ -131,7 +131,7 @@
       <option value="region1">Region 1 – CA LIWP Farmworkers</option>
       <option value="region2">Region 2 – CA LIWP Farmworkers</option>
       <option value="sdge">SDGE – Whole Home Program</option>
-      <option value="sce">SCE/SCG ESA Whole Home</option>
+      <option value="sce" selected>SCE/SCG ESA Whole Home</option>
     </select>
   </div>
 
@@ -236,7 +236,10 @@
 let currentPath = 'MEASURES';
 let lastData = null;
 let currentView = 'friendly';
-let selectedProgram = 'region1';
+// Must stay in sync with the `selected` option in #programSelect above, and with
+// DEFAULT_PROGRAM in proxy.js / worker.js (which sign requests that arrive without
+// a ?program=). A mismatch signs against one program while the UI claims another.
+let selectedProgram = 'sce';
 
 function onProgramChange(val) {
   selectedProgram = val;
@@ -1298,19 +1301,25 @@ async function exportXlsx() {
     const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
     mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome, classifyHvac(data)]);
 
-    // Column order must match table2.xml: AuditId,Measure,Src,ReportingCode,Code,
-    // MeasureQty,Unit,Cost/Unit,MeasureCostOverride,Saved kWh,Saved Therms,Saved MMBTU,
-    // Deemed kWh,Deemed Therms,Deemed MMBTU,SavedkWh,SavedTherms,SavedMBTUs
+    // Column order MUST match sheet2's header row (A..S), which is the reporting
+    // upload schema in A..J followed by the backing detail in K..S:
+    //   A AuditId  B ReportingCode  C Code  D MeasureQty  E Unit
+    //   F SavedkWh  G kW  H SavedTherms  I SavedMBTUs  J MeasureCostOverride
+    //   K Measure  L Src  M Cost/Unit
+    //   N..P Saved kWh/Therms/MMBTU   Q..S Deemed kWh/Therms/MMBTU
+    // A..J is what gets reported, so F/H/I carry the tier-basis calculated figures;
+    // N..S keep the modeled and deemed breakdown they were derived from. G (kW) has
+    // no source in /all-data and is left blank.
     // The sheet layout is fixed by the template, so the Stage and Yearly Energy Cost
     // Savings columns shown in the table and CSV are not carried here.
     flattenMeasures(data).forEach(r => {
       stampCalcColumns(r, tier);
       measuresOut.push([
-        jobId, r.measure, r.source, r.name, r.code,
-        r.quantity, r.unit, r.costPerUnit, r.lineCost,
+        jobId, r.measure, r.code, r.quantity, r.unit,
+        r.calcKwh, null, r.calcTherms, r.calcMmbtu, r.lineCost,
+        r.name, r.source, r.costPerUnit,
         r.savedKwh, r.savedTherms, r.savedMmbtu,
-        r.deemedKwh, r.deemedTherms, r.deemedMmbtu,
-        r.calcKwh, r.calcTherms, r.calcMmbtu
+        r.deemedKwh, r.deemedTherms, r.deemedMmbtu
       ]);
     });
 
@@ -1328,7 +1337,12 @@ async function exportXlsx() {
   // Open template ZIP and patch sheets; strip all Excel tables to avoid repair errors
   const zip = await JSZip.loadAsync(tplBuf);
 
-  async function patchSheet(sheetPath, tablePath, dataRows, numCols) {
+  // A sheet's Excel tables are whatever its own .rels points at — the table<N>.xml
+  // numbering does NOT track the sheet numbering (in this template table1 belongs to
+  // sheet3 and table2 to sheet4, and sheets 1-2 have no table at all). Deleting them
+  // by guessed name left sheet3/sheet4 referencing missing parts, which is what makes
+  // Excel offer to repair the file.
+  async function patchSheet(sheetPath, dataRows, numCols) {
     const sXml = await zip.file(sheetPath).async('string');
     // Write data and remove <tableParts> reference so the sheet doesn't point to a table
     const patched = patchSheetXml(sXml, dataRows, numCols)
@@ -1336,22 +1350,24 @@ async function exportXlsx() {
       .replace(/<tableParts\b[^>]*\/>/g, '');
     zip.file(sheetPath, patched);
 
-    // Remove the table XML file and its relationship entry
-    zip.remove(tablePath);
+    // Drop every table this sheet actually owns, then its relationship entries
     const sheetName = sheetPath.split('/').pop();
     const relsPath = `xl/worksheets/_rels/${sheetName}.rels`;
     const relsFile = zip.file(relsPath);
-    if (relsFile) {
-      const relsXml = await relsFile.async('string');
-      const cleaned = relsXml.replace(/<Relationship\b[^>]*Type="[^"]*\/table"[^>]*\/>/g, '');
-      zip.file(relsPath, cleaned);
-    }
+    if (!relsFile) return;
+    const relsXml = await relsFile.async('string');
+    const relRe = /<Relationship\b[^>]*Type="[^"]*\/table"[^>]*\/>/g;
+    (relsXml.match(relRe) || []).forEach(rel => {
+      const target = (rel.match(/Target="([^"]*)"/) || [])[1];
+      if (target) zip.remove('xl/' + target.replace(/^\.\.\//, ''));
+    });
+    zip.file(relsPath, relsXml.replace(relRe, ''));
   }
 
-  await patchSheet('xl/worksheets/sheet1.xml', 'xl/tables/table1.xml', mainOut,     5);
-  await patchSheet('xl/worksheets/sheet2.xml', 'xl/tables/table2.xml', measuresOut, 18);
-  await patchSheet('xl/worksheets/sheet3.xml', 'xl/tables/table3.xml', elecOut,     8);
-  await patchSheet('xl/worksheets/sheet4.xml', 'xl/tables/table4.xml', gasOut,      8);
+  await patchSheet('xl/worksheets/sheet1.xml', mainOut,     5);
+  await patchSheet('xl/worksheets/sheet2.xml', measuresOut, 19);
+  await patchSheet('xl/worksheets/sheet3.xml', elecOut,     8);
+  await patchSheet('xl/worksheets/sheet4.xml', gasOut,      8);
 
   // Remove table content-type entries from [Content_Types].xml
   const ctFile = zip.file('[Content_Types].xml');
