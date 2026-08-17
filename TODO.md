@@ -73,7 +73,7 @@ Copy the printed `https://snuggpro-inspector.<something>.workers.dev` URL.
 ## Step 7 — Test it yourself first (incognito window)
 1. Open the URL → you should see a login page
 2. Enter one of your `ALLOWED_EMAILS` → check email for the 6-digit code → paste it
-3. Fetch job **332046** → confirm the Measures Table shows combined **967.82 kWh**
+3. Fetch a non-production test job you are authorized to access → confirm the Measures Table loads and its totals reconcile with the source job
 4. (Optional) try a non-listed email → confirm it's blocked
 
 ## Step 8 — Share with your team
@@ -100,14 +100,13 @@ identical** in both run modes — only **how you launch** differs.
 
 ### How to launch (both modes live on `main`)
 - **Hosted (team):** after `wrangler deploy`, open the `*.workers.dev` URL → sign in with an
-  allowlisted email + the mailed code. (Locally: `npx wrangler dev` or `run.bat` → port 8787.)
+  allowlisted email + the mailed code. (Locally: `npx wrangler dev` → port 8787, or `start.bat` → port 2023.)
 - **Local (solo):** `npm start` (runs `proxy.js` on :3001) → open **http://localhost:3001**
   in Chrome. No deploy, login, or email involved; exports save into `exports/`.
 
 ### Checks for BOTH modes
-- [ ] **Measures Table**, job **332046 (Bissonette)** → combined **967.82 kWh**
-      (538.69 modeled + 429.13 deemed).
-- [ ] **Usage / Billing**, job **332046** → electric + gas rows with Bill Start / Bill End /
+- [ ] **Measures Table**, non-production test job → combined totals reconcile with modeled + deemed source values.
+- [ ] **Usage / Billing**, same test job → electric + gas rows with Bill Start / Bill End /
       Billed Days / Usage / Units / MMBTU populated.
 - [ ] **MMBTU spot-check** → a ~1000 kWh period ≈ 3.412 MMBTU; a 50-therm period = 5.0 MMBTU.
       Spot-check one Billed Days against its two dates.
@@ -128,9 +127,9 @@ identical** in both run modes — only **how you launch** differs.
 
 ## Open questions from the code review (need live data to settle)
 
-- [x] **Confirm the units of "Yearly Energy Cost Savings."** Checked against job **332046**:
+- [x] **Confirm the units of "Yearly Energy Cost Savings."** Checked against a sanitized validation case:
       the `totalSavings` key inside the `deemedAndModeledKwhSavings` incentive's `metadataJSON`
-      was energy (kWh), not dollars — it matched the combined 967.82 kWh figure, not a
+      was energy (kWh), not dollars — it matched the combined energy figure, not a
       plausible dollar amount. Dropped that source; `getYearlyCostSavings()` now reads
       `totals.totalSavings` alone (swagger: "the total cost of energy saved by the improved
       home per year", dollars — modeled only, same scope as `installedCosts`, which is
@@ -143,9 +142,9 @@ identical** in both run modes — only **how you launch** differs.
       / `savings` / `sir` onto **every** one of its `detailedCosts` line items. A measure billed
       as separate "Labor" and "Material" lines therefore contributes its savings **twice** to the
       TOTAL row and to the Combined kWh/Therms/MMBTU cards. This is long-standing behaviour, not
-      new — job 332046 validates at 967.82 kWh, so its active measures evidently have one line
-      item each. Confirm against a job whose recommendations have multiple line items; if the
-      totals inflate, the fix is to attribute savings to the first line item only (or split it),
+      new — prior single-line-item validation cases do not expose it. Confirm against a test job
+      whose recommendations have multiple line items; if the totals inflate, the fix is to
+      attribute savings to the first line item only (or split it),
       and the validation reference numbers need re-checking afterwards.
 - [ ] **XLSX export omits Stage and Yearly Energy Cost Savings.** The workbook's sheet layout is
       fixed by `template_range.xlsx` (18 measure columns, matched by position), so the two new

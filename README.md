@@ -1,6 +1,6 @@
 # SnuggPro Inspector
 
-A local proxy and browser UI to pull SnuggPro job records by ID and inspect them without navigating the SnuggPro web app. Includes a Measures Table that flattens recommendations and direct-install line items into a sortable, exportable grid for reporting and import.
+A local proxy and browser UI to pull SnuggPro job records by ID or customer name and inspect them without navigating the SnuggPro web app. Includes a Measures Table that flattens recommendations and direct-install line items into a sortable, exportable grid for reporting and import.
 
 ## Why a proxy?
 
@@ -46,11 +46,11 @@ To add/remove a teammate later: edit `ALLOWED_EMAILS` in `wrangler.toml` and `np
 
 Leave the proxy terminal running while you use the inspector. Exports (CSV/XLSX) are saved into the repo's `exports/` folder in this mode.
 
-**Alternative: run the hosted stack locally.** `npx wrangler dev` serves the Worker (UI + email login + proxy) at `http://localhost:8787`; set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the login gate when working solo. On Windows, `run.bat` does checkout/pull/install and launches `wrangler dev` in one click (`stop.bat` / `restart.bat` manage it).
+**Alternative: run the hosted stack locally.** `npx wrangler dev` serves the Worker (UI + email login + proxy) at `http://localhost:8787`; set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the login gate when working solo. On Windows, `start.bat` does checkout/pull/install and launches `wrangler dev` on port 2023 (`stop.bat` / `restart.bat` manage it).
 
 ## Usage
 
-- Enter a Job ID (visible in the SnuggPro URL: `app.snuggpro.com/jobs/XXXXX`) and click Fetch.
+- Enter a Job ID (visible in the SnuggPro URL: `app.snuggpro.com/jobs/XXXXX`) or a customer name and click Fetch. Numeric IDs may be separated by commas or spaces. Names containing spaces stay intact; separate multiple names, or a name and an ID, with commas (for example, `Jane Doe, 123456`). Name matching is case-insensitive and supports partial first/last names. Jobs are deduplicated after name matching, so entering the same job by both ID and name fetches it only once. The API's job list contains IDs only, so the first name search for a program builds an in-memory name index and can take longer; later searches reuse it until the page reloads or the program changes.
 - Sidebar groups every GET endpoint (job, building systems, appliances, program/financials, account/company).
 - Toggle Fields vs Raw JSON; Copy exports the full JSON for the active endpoint.
 - Click any cell value to copy it to the clipboard.
@@ -84,7 +84,7 @@ Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into 
 - `template.xlsx` — legacy XLSX template (kept for reference)
 - `proxy.js` — local signing proxy: serves UI, templates, `/programs`, and saves exports
 - `exports/` — where local-mode CSV/XLSX exports are saved (contents gitignored)
-- `run.bat` / `stop.bat` / `restart.bat` — Windows one-click launchers for `wrangler dev` (port 8787)
+- `start.bat` / `stop.bat` / `restart.bat` — Windows one-click launchers for `wrangler dev` (port 2023)
 - `.env` — your API keys for `proxy.js` (gitignored, never committed)
 - `.env.example` — template for `proxy.js`
 - `.dev.vars` / `.dev.vars.example` — secrets for local `wrangler dev` (gitignored)

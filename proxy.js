@@ -152,7 +152,7 @@ const server = http.createServer((req, res) => {
 server.on('listening', () => {
   const port = server.address().port;
   console.log(`SnuggPro proxy running -> http://localhost:${port}`);
-  console.log(`Test: http://localhost:${port}/proxy/jobs/332046`);
+  console.log(`Example request: http://localhost:${port}/proxy/jobs/<job-id>`);
   if (port !== Number(PORT)) console.log(`(port ${PORT} was in use, bound to ${port} instead)`);
 });
 

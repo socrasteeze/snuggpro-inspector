@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set PORT=8787
+set PORT=2023
 echo Stopping server on port %PORT%...
 
 set FOUND=0

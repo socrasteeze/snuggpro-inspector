@@ -16,7 +16,7 @@ call npm install
 if errorlevel 1 goto :error
 
 echo Starting server...
-call npx wrangler dev
+call npx wrangler dev --port 2023
 
 goto :eof
 

@@ -9,6 +9,6 @@ echo.
 echo Restarting...
 echo.
 
-call "%~dp0run.bat"
+call "%~dp0start.bat"
 
 endlocal

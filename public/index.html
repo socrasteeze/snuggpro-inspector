@@ -211,9 +211,9 @@
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <label>Job ID(s)</label>
-    <input type="text" id="jobId" value="332046" placeholder="e.g. 332046, 355981" />
-    <span class="job-hint">comma or space separated</span>
+    <label>Job ID(s) or name</label>
+    <input type="text" id="jobId" value="" placeholder="e.g. 123456, Jane Doe" />
+    <span class="job-hint">IDs: comma/space separated · names: comma separated</span>
     <button class="fetch-btn" id="fetchBtn" onclick="doFetch()">Fetch</button>
     <span class="endpoint-display" id="endpointDisplay">MEASURES</span>
     <span class="status-badge" id="statusBadge" style="display:none"></span>
@@ -243,6 +243,11 @@ let selectedProgram = 'sce';
 
 function onProgramChange(val) {
   selectedProgram = val;
+  // Cache keys are already program-scoped, so this is housekeeping rather than
+  // correctness: switching programs is the natural point to release the payloads
+  // of jobs you've moved on from.
+  jobDataCache.clear();
+  jobListCache.clear();
 }
 
 // Relative URLs — no port detection needed; worker serves everything on same origin.
@@ -260,33 +265,46 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.add('active');
     currentPath = btn.dataset.path;
     document.getElementById('endpointDisplay').textContent = currentPath;
-    // Auto-fetch on tab change when a Job ID is already entered (skip the nag otherwise).
-    if (parseJobIds(document.getElementById('jobId').value).length > 0) doFetch();
+    // Auto-fetch on tab change when a job search is already entered (skip the nag otherwise).
+    if (parseJobSearch(document.getElementById('jobId').value).length > 0) doFetch();
   });
 });
 
-function resolvedPath() {
-  const jobId = parseJobIds(document.getElementById('jobId').value)[0] || '';
+function resolvedPath(jobId = '') {
   return currentPath.replace('{jobId}', jobId);
 }
 
 async function doFetch() {
-  const jobId = parseJobIds(document.getElementById('jobId').value)[0] || '';
+  const rawSearch = document.getElementById('jobId').value;
 
   // Special reporting view
   if (currentPath === 'MEASURES') {
-    return fetchMeasures(document.getElementById('jobId').value);
+    return fetchMeasures(rawSearch);
   }
   if (currentPath === 'USAGE') {
-    return fetchUsageBilling(document.getElementById('jobId').value);
+    return fetchUsageBilling(rawSearch);
   }
 
-  if (!jobId && currentPath.includes('{jobId}')) {
-    alert('Enter a Job ID.');
-    return;
+  let jobId = '';
+  if (currentPath.includes('{jobId}')) {
+    if (parseJobSearch(rawSearch).length === 0) {
+      alert('Enter a Job ID or name.');
+      return;
+    }
+    setBadge('loading', 'Resolving job…');
+    const resolved = await resolveJobIds(rawSearch);
+    jobId = resolved.jobIds[0] || '';
+    if (!jobId) {
+      showJobSearchErrors(resolved.errors);
+      return;
+    }
+    if (parseJobSearch(rawSearch).some(term => term.type === 'name') && resolved.jobIds.length > 1) {
+      showJobSearchErrors([`Name search matched ${resolved.jobIds.length} jobs. Use Measures or Usage to load all matches, or enter a Job ID for this endpoint.`]);
+      return;
+    }
   }
 
-  const path = resolvedPath();
+  const path = resolvedPath(jobId);
   const url = proxyUrl(path);
   const label = document.querySelector('.nav-item.active')?.dataset.label || path;
 
@@ -477,9 +495,8 @@ function getReportingContext(data) {
 // Yearly Energy Cost Savings ($/yr): job's totals.totalSavings (swagger: "the total
 // cost of energy saved by the improved home per year", dollars — modeled savings only,
 // same scope as totals.installedCosts which is documented "excluding direct installs").
-// Was previously read from rebatesIncentives metadata first; verified against job
-// 332046 that the metadata value was actually kWh, not dollars, so that source is
-// dropped and this is the only one now.
+// Was previously read from rebatesIncentives metadata first; live validation showed
+// that metadata value was energy, not dollars, so that source is dropped.
 function getYearlyCostSavings(data) {
   return num(data?.totals?.totalSavings);
 }
@@ -575,8 +592,178 @@ function flattenMeasures(data) {
   return rows;
 }
 
+// Commas are the universal separator. A comma-delimited entry made only of
+// numbers can still contain whitespace-separated IDs, preserving the original
+// batch syntax. Any entry containing other characters is kept intact as a name,
+// so "Jane Doe" is one search instead of two broken IDs. Mixed names and IDs
+// must be comma-separated: "Jane Doe, 123456".
+function parseJobSearch(raw) {
+  const terms = [];
+  String(raw || '').split(',').forEach(part => {
+    const value = part.trim();
+    if (!value) return;
+    if (/^\d+(?:\s+\d+)*$/.test(value)) {
+      value.split(/\s+/).forEach(id => terms.push({ type: 'id', value: id }));
+    } else {
+      terms.push({ type: 'name', value });
+    }
+  });
+
+  const seen = new Set();
+  return terms.filter(term => {
+    const key = `${term.type}:${term.value.toLocaleLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function parseJobIds(raw) {
-  return [...new Set(raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean))];
+  return parseJobSearch(raw).filter(term => term.type === 'id').map(term => term.value);
+}
+
+function normalizeJobName(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const jobListCache = new Map();
+const JOB_INDEX_CONCURRENCY = 8;
+
+async function fetchJobList() {
+  const program = selectedProgram;
+  const cached = jobListCache.get(program);
+  if (cached) return cached;
+
+  // Cache the in-flight build as well as the finished index. A double-click or
+  // tab switch during the first search must not launch a second hydration sweep.
+  const loading = (async () => {
+    const programUrl = apiPath => `/proxy${apiPath}?program=${program}`;
+    const res = await fetch(programUrl('/jobs'));
+    const text = await res.text();
+    let roster;
+    try { roster = JSON.parse(text); } catch (_) { roster = null; }
+    if (!res.ok || !Array.isArray(roster)) {
+      throw new Error(`${res.status} ${res.statusText}`.trim());
+    }
+
+    // The live API currently returns only { id, altId } from /jobs even though
+    // its published schema describes full job records. Hydrate those lightweight
+    // entries from /jobs/{id} once per program/session so name searches are real,
+    // then keep the index in memory. Existing /all-data cache hits are reused.
+    if (roster.some(job => job.firstName || job.lastName)) {
+      return { jobs: roster, failed: 0 };
+    }
+
+    const jobs = new Array(roster.length).fill(null);
+    let next = 0;
+    let completed = 0;
+    let failed = 0;
+
+    async function worker() {
+      while (next < roster.length) {
+        const i = next++;
+        const rosterJob = roster[i];
+        const id = rosterJob.id ?? rosterJob.jobId;
+        const cachedData = jobDataCache.get(`${program}:${id}`);
+        if (cachedData?.job) {
+          jobs[i] = cachedData.job;
+          completed++;
+          continue;
+        }
+
+        try {
+          const detailRes = await fetch(programUrl(`/jobs/${encodeURIComponent(id)}`));
+          const detailText = await detailRes.text();
+          let detail;
+          try { detail = JSON.parse(detailText); } catch (_) { detail = null; }
+          if (!detailRes.ok || !detail) failed++;
+          else jobs[i] = detail.job || detail;
+        } catch (_) {
+          failed++;
+        }
+
+        completed++;
+        if (completed === roster.length || completed % 25 === 0) {
+          setBadge('loading', `Indexing names ${completed}/${roster.length}…`);
+        }
+      }
+    }
+
+    const lanes = Math.min(JOB_INDEX_CONCURRENCY, roster.length);
+    await Promise.all(Array.from({ length: lanes }, worker));
+    return { jobs: jobs.filter(Boolean), failed };
+  })();
+
+  jobListCache.set(program, loading);
+  try {
+    const complete = await loading;
+    jobListCache.set(program, complete);
+    return complete;
+  } catch (error) {
+    if (jobListCache.get(program) === loading) jobListCache.delete(program);
+    throw error;
+  }
+}
+
+async function resolveJobIds(raw) {
+  const terms = parseJobSearch(raw);
+  const nameTerms = terms.filter(term => term.type === 'name');
+  let jobs = [];
+  let indexFailures = 0;
+
+  if (nameTerms.length) {
+    try {
+      const index = await fetchJobList();
+      jobs = index.jobs;
+      indexFailures = index.failed;
+    } catch (error) {
+      return { jobIds: [], errors: [`Could not search jobs by name: ${error.message}`] };
+    }
+  }
+
+  const jobIds = [];
+  const errors = [];
+  terms.forEach(term => {
+    if (term.type === 'id') {
+      jobIds.push(term.value);
+      return;
+    }
+
+    const query = normalizeJobName(term.value);
+    const exact = jobs.filter(job => normalizeJobName(`${job.firstName || ''} ${job.lastName || ''}`) === query);
+    const candidates = exact.length ? exact : jobs.filter(job => {
+      const name = normalizeJobName(`${job.firstName || ''} ${job.lastName || ''}`);
+      return query.split(' ').every(token => name.includes(token));
+    });
+    const matches = candidates
+      .map(job => job.id ?? job.jobId)
+      .filter(id => id !== null && id !== undefined && String(id).trim());
+
+    if (matches.length === 0) errors.push(`No jobs matched name “${term.value}”.`);
+    else jobIds.push(...matches.map(String));
+  });
+
+  if (indexFailures) {
+    errors.push(`Name index could not read ${indexFailures} job record${indexFailures === 1 ? '' : 's'}.`);
+  }
+
+  // Deduplicate after names have resolved to IDs. This catches both repeated
+  // input and the same job supplied once by ID and again by customer name.
+  return { jobIds: [...new Set(jobIds)], errors };
+}
+
+function showJobSearchErrors(errors) {
+  const messages = errors.length ? errors : ['No matching jobs found.'];
+  setBadge('err', 'No matching jobs');
+  document.getElementById('resultWrap').style.display = 'block';
+  document.getElementById('resultTitle').textContent = 'Job search';
+  document.getElementById('rawPre').textContent = '';
+  document.getElementById('friendly-view').innerHTML = `<div class="err-block">${messages.map(esc).join('<br/>')}</div>`;
 }
 
 // How many /jobs/{id}/all-data requests to keep in flight. The jobs are
@@ -584,17 +771,39 @@ function parseJobIds(raw) {
 // longer than it needs to; capped so a large batch doesn't stampede the API.
 const JOB_FETCH_CONCURRENCY = 6;
 
+// Raw /all-data payloads from this session, so that fetching a batch into a view
+// and then exporting it doesn't pull every job over the wire a second time.
+// Keyed by program as well as job id: the same job id signed against a different
+// program is a different request, and its response must not be reused across the
+// program switcher. Only successful responses are cached — a failed job stays a
+// miss so the next attempt actually retries it.
+const jobDataCache = new Map();
+const jobCacheKey = jobId => `${selectedProgram}:${jobId}`;
+
 // Load /jobs/{id}/all-data for every id. Returns { data, errors }: `data` is
 // index-aligned with jobIds (null where the job failed) and `errors` is in
 // jobIds order regardless of which response landed first.
-async function fetchJobsAllData(jobIds) {
+//
+// Cached jobs are served without a request. Pass { refresh: true } from an
+// explicit user-initiated fetch so hitting Fetch always re-reads the job; the
+// exports deliberately don't, so they reuse whatever the view just loaded.
+async function fetchJobsAllData(jobIds, { refresh = false } = {}) {
   const data = new Array(jobIds.length).fill(null);
   const errs = new Array(jobIds.length).fill(null);
+
+  // Resolve cache hits up front; only the misses get a lane.
+  const pending = [];
+  jobIds.forEach((jobId, i) => {
+    const hit = refresh ? undefined : jobDataCache.get(jobCacheKey(jobId));
+    if (hit) data[i] = hit;
+    else pending.push(i);
+  });
+
   let next = 0;
 
   async function worker() {
-    while (next < jobIds.length) {
-      const i = next++;
+    while (next < pending.length) {
+      const i = pending[next++];
       const jobId = jobIds[i];
       try {
         const res = await fetch(proxyUrl(`/jobs/${jobId}/all-data`));
@@ -602,21 +811,27 @@ async function fetchJobsAllData(jobIds) {
         let parsed;
         try { parsed = JSON.parse(text); } catch(_) { parsed = null; }
         if (!res.ok || !parsed) errs[i] = `Job ${jobId}: ${res.status} ${res.statusText}`;
-        else data[i] = parsed;
+        else {
+          data[i] = parsed;
+          jobDataCache.set(jobCacheKey(jobId), parsed);
+        }
       } catch(_) {
         errs[i] = `Job ${jobId}: network error`;
       }
     }
   }
 
-  const lanes = Math.min(JOB_FETCH_CONCURRENCY, jobIds.length);
+  const lanes = Math.min(JOB_FETCH_CONCURRENCY, pending.length);
   await Promise.all(Array.from({ length: lanes }, worker));
   return { data, errors: errs.filter(Boolean) };
 }
 
 async function fetchMeasures(rawIds) {
-  const jobIds = parseJobIds(rawIds);
-  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+  if (parseJobSearch(rawIds).length === 0) { alert('Enter at least one Job ID or name.'); return; }
+  setBadge('loading', 'Resolving jobs…');
+  const resolved = await resolveJobIds(rawIds);
+  const jobIds = resolved.jobIds;
+  if (jobIds.length === 0) { showJobSearchErrors(resolved.errors); return; }
 
   const multi = jobIds.length > 1;
   setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
@@ -627,7 +842,9 @@ async function fetchMeasures(rawIds) {
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
   setView('friendly');
 
-  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
+  const fetched = await fetchJobsAllData(jobIds, { refresh: true });
+  const jobData = fetched.data;
+  const errors = [...resolved.errors, ...fetched.errors];
 
   const allRows = [];
   let combinedData = null; // last successful job's data — backs the raw JSON pane
@@ -661,6 +878,7 @@ async function fetchMeasures(rawIds) {
   lastData = combinedData;
   document.getElementById('rawPre').textContent = JSON.stringify(combinedData, null, 2);
   measureRows = allRows;
+  activeJobIds = jobIds;
   // Capture the summary context now, against the job actually on screen, so later
   // re-renders (sort, collapse) can't pick up a different job's numbers.
   measuresCtx = { ...getReportingContext(combinedData), stage: stageLabel(combinedData) };
@@ -834,7 +1052,7 @@ function toggleSavedDeemed() {
 }
 
 // Build a clean, comma/space-free filename token from the Job ID input.
-//   1 job  -> job_332046      2-3 jobs -> jobs_332046-355981      4+ -> 5jobs
+//   1 job  -> job_123456      2-3 jobs -> jobs_123456-234567      4+ -> 5jobs
 // Save an export file. Against the local proxy.js, POST /exports lands it in the
 // repo's exports/ folder; on the hosted Worker that route doesn't exist, so fall
 // back to a normal browser download. Never put path separators in a.download —
@@ -851,8 +1069,10 @@ async function saveOrDownload(blob, filename) {
   URL.revokeObjectURL(a.href);
 }
 
+let activeJobIds = [];
+
 function jobFileTag() {
-  const ids = parseJobIds(document.getElementById('jobId').value).map(s => s.replace(/[^\w.-]/g, ''));
+  const ids = activeJobIds.map(s => String(s).replace(/[^\w.-]/g, ''));
   if (ids.length === 0) return 'export';
   if (ids.length === 1) return `job_${ids[0]}`;
   if (ids.length <= 3) return `jobs_${ids.join('-')}`;
@@ -957,8 +1177,11 @@ function flattenUsage(data) {
 }
 
 async function fetchUsageBilling(rawIds) {
-  const jobIds = parseJobIds(rawIds);
-  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+  if (parseJobSearch(rawIds).length === 0) { alert('Enter at least one Job ID or name.'); return; }
+  setBadge('loading', 'Resolving jobs…');
+  const resolved = await resolveJobIds(rawIds);
+  const jobIds = resolved.jobIds;
+  if (jobIds.length === 0) { showJobSearchErrors(resolved.errors); return; }
 
   const multi = jobIds.length > 1;
   setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
@@ -969,7 +1192,9 @@ async function fetchUsageBilling(rawIds) {
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
   setView('friendly');
 
-  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
+  const fetched = await fetchJobsAllData(jobIds, { refresh: true });
+  const jobData = fetched.data;
+  const errors = [...resolved.errors, ...fetched.errors];
 
   const allRows = [];
   let lastUtilities = null;
@@ -992,6 +1217,7 @@ async function fetchUsageBilling(rawIds) {
 
   document.getElementById('rawPre').textContent = JSON.stringify(lastUtilities, null, 2);
   usageRows = allRows;
+  activeJobIds = jobIds;
   setBadge('ok', errors.length ? `Loaded · ${errors.length} error(s)` : `${allRows.length} bills`);
   renderUsage();
 }
@@ -1175,7 +1401,9 @@ function copyJson() {
 }
 
 // Auto-fetch on load
-window.addEventListener('load', () => doFetch());
+window.addEventListener('load', () => {
+  if (parseJobSearch(document.getElementById('jobId').value).length > 0) doFetch();
+});
 
 // ---------- XLSX EXPORT ----------
 // Uses JSZip to patch the template ZIP directly, avoiding SheetJS's table round-trip
@@ -1272,9 +1500,13 @@ function patchTableXml(tableXml, newRef, columnNames) {
 
 async function exportXlsx() {
   const rawIds = document.getElementById('jobId').value.trim();
-  const jobIds = parseJobIds(rawIds);
-  if (jobIds.length === 0) { alert('Enter at least one Job ID.'); return; }
+  if (parseJobSearch(rawIds).length === 0) { alert('Enter at least one Job ID or name.'); return; }
 
+  setBadge('loading', 'Resolving jobs…');
+  const resolved = await resolveJobIds(rawIds);
+  const jobIds = resolved.jobIds;
+  if (jobIds.length === 0) { showJobSearchErrors(resolved.errors); return; }
+  activeJobIds = jobIds;
   setBadge('loading', 'Building XLSX…');
 
   let tplBuf;
@@ -1285,7 +1517,9 @@ async function exportXlsx() {
   } catch(e) { alert('Could not load template.'); setBadge('err', 'Template error'); return; }
 
   const mainOut = [], measuresOut = [], elecOut = [], gasOut = [];
-  const { data: jobData, errors } = await fetchJobsAllData(jobIds);
+  const fetched = await fetchJobsAllData(jobIds);
+  const jobData = fetched.data;
+  const errors = [...resolved.errors, ...fetched.errors];
 
   jobIds.forEach((jobId, i) => {
     const data = jobData[i];

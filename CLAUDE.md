@@ -11,7 +11,7 @@ A tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. The signi
 
 The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path (with `?program=` from the program switcher) and renders job data, including a flattened Measures Table and Usage/Billing view with CSV and template-based XLSX export.
 
-There is no build, bundler, or test runner. Edit files and reload. Local runs: `npm start` → `http://localhost:3001` (no login), or `npx wrangler dev` → `localhost:8787` to exercise the hosted login flow (set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip it; `run.bat`/`stop.bat`/`restart.bat` wrap this on Windows).
+There is no build, bundler, or test runner. Edit files and reload. Local runs: `npm start` → `http://localhost:3001` (no login), or `npx wrangler dev` → `localhost:8787` to exercise the hosted login flow (set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip it; `start.bat`/`stop.bat`/`restart.bat` use port 2023 on Windows).
 
 ## Running it
 
@@ -58,7 +58,7 @@ Rules that MUST hold (each was a real correction — do not regress them):
 4. **Modeled and deemed are separate columns.** They are never added within a row. The combined figure (modeled + deemed) only appears in the summary panel, computed across the two column groups.
 5. **Reporting basis** comes from `rebatesIncentives` -> entry with `code == "deemedAndModeledKwhSavings"` -> `metadataJSON` -> `combinedTotalEnergySavings`. Over 15% = modeled (saved) basis; 5-15% = deemed; under 5% = flag for review.
 
-Validation reference (job 332046, Bissonette): combined 967.82 kWh = 538.69 modeled + 429.13 deemed. (Job 355981, Goehring): combined 1351.32 kWh, 107.07 therms, 16.65% savings (borderline, flags modeled).
+Historical live validation confirmed that combined savings equal modeled plus deemed values and that a borderline result above 15% selects the modeled basis. Use only non-production test jobs for future validation; do not record customer identifiers here.
 
 ### Conventions the measures/usage code relies on
 - **Job payloads are passed as arguments, never read from `lastData`.** `getReportingContext(data)`,
@@ -77,9 +77,14 @@ Validation reference (job 332046, Bissonette): combined 967.82 kWh = 538.69 mode
 - **Anything from the API goes through `esc()` before it lands in an `innerHTML` string or in the
   XLSX sheet XML** — measure titles, line-item names, stage ids and units are free-form SnuggPro
   fields, and on the hosted Worker the page shares an origin with the session cookie.
-- **Multi-job fetches go through `fetchJobsAllData(jobIds)`**, which loads up to
+- **Multi-job fetches go through `fetchJobsAllData(jobIds, { refresh })`**, which loads up to
   `JOB_FETCH_CONCURRENCY` jobs at once and returns `{ data, errors }` index-aligned with the input.
-  Don't reintroduce a per-job `await` loop.
+  Don't reintroduce a per-job `await` loop. Successful payloads are memoized in `jobDataCache`
+  under `program:jobId` — program-scoped because the same id signed against another program is a
+  different request, and failures are never cached so the next attempt retries. The view fetches
+  (`fetchMeasures`, `fetchUsageBilling`) pass `refresh: true` so pressing Fetch always re-reads the
+  job; `exportXlsx` deliberately doesn't, so exporting a batch you just pulled into a view costs no
+  requests. Keep that split — making the export refresh too restores the double round-trip.
 - Sidebar `.nav-item` buttons without a `data-path` (Export XLSX) are action buttons: the delegated
   nav handler returns early for them, so they don't blank `currentPath` or steal the active view.
 

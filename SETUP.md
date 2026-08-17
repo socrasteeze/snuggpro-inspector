@@ -115,7 +115,7 @@ the product.**
 
 1. Open the URL → you should see the login page.
 2. Enter one of your `ALLOWED_EMAILS` → check email for the 6-digit code → paste it.
-3. Fetch job **332046** → the Measures Table should show combined **967.82 kWh**.
+3. Fetch a non-production test job you are authorized to access → the Measures Table should load and its totals should reconcile with the source job.
 4. Switch programs in the dropdown and confirm a fetch works for each program you configured.
 5. (Optional) try a non-allowlisted email → it should be blocked.
 
@@ -153,8 +153,8 @@ npx wrangler dev                 # serves UI + login + proxy at http://localhost
 - **Skip the login gate while working solo:** set `LOCAL_BYPASS_AUTH=true` in `.dev.vars`.
   It only works on `localhost` — the Worker refuses the bypass on any deployed hostname —
   and `.dev.vars` is gitignored, so it can never reach the team deployment.
-- **Windows one-click:** `run.bat` checks out main, pulls, installs, and starts `wrangler dev`;
-  `stop.bat` / `restart.bat` manage the server on port 8787.
+- **Windows one-click:** `start.bat` checks out main, pulls, installs, and starts `wrangler dev`
+  on port 2023; `stop.bat` / `restart.bat` manage that server.
 
 (`proxy.js` on `localhost:3001` is the other local mode — it serves the UI same-origin with no
 login and saves exports into `exports/`. `wrangler dev` is the way to exercise the full hosted
