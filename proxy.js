@@ -12,6 +12,7 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 const PORT = process.env.PORT || 3001;
 const EXPORTS_DIR = path.join(__dirname, 'exports');
@@ -122,6 +123,12 @@ const server = http.createServer((req, res) => {
   if (req.method !== 'GET') { res.writeHead(405); res.end('Method not allowed'); return; }
 
   const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+  // Same as the Worker: only /proxy/* is signed and forwarded.
+  if (!reqUrl.pathname.startsWith('/proxy')) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    return;
+  }
   const programKey = reqUrl.searchParams.get('program') || DEFAULT_PROGRAM;
   const proxyPath = reqUrl.pathname.replace(/^\/proxy/, '') + (reqUrl.search.replace(/[?&]program=[^&]*/g, '').replace(/^&/, '?') || '');
   const { date, auth } = signRequest(programKey);
@@ -163,10 +170,22 @@ const server = http.createServer((req, res) => {
 // would stack callbacks and print one bogus "running" line per failed attempt.
 server.on('listening', () => {
   const port = server.address().port;
-  console.log(`SnuggPro proxy running -> http://localhost:${port}`);
-  console.log(`Example request: http://localhost:${port}/proxy/jobs/<job-id>`);
+  const url = `http://localhost:${port}`;
+  console.log(`SnuggPro proxy running -> ${url}`);
+  console.log(`Example request: ${url}/proxy/jobs/<job-id>`);
   if (port !== Number(PORT)) console.log(`(port ${PORT} was in use, bound to ${port} instead)`);
+  // Portable launcher sets OPEN_BROWSER so the tab opens after bind succeeds.
+  if (process.env.OPEN_BROWSER) openBrowser(url);
 });
+
+function openBrowser(url) {
+  // explorer.exe, not `cmd /c start`: start can detach the launcher console
+  // so the window looks like it auto-closed while node keeps running.
+  const args = process.platform === 'win32' ? ['explorer.exe', url]
+    : process.platform === 'darwin' ? ['open', url]
+    : ['xdg-open', url];
+  spawn(args[0], args.slice(1), { detached: true, stdio: 'ignore' }).unref();
+}
 
 function listen(port) {
   server.listen(port);
