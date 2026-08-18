@@ -439,6 +439,11 @@ function classifyHvac(data) {
   return '';
 }
 
+function typeOfHomeLabel(data) {
+  const v = data?.house?.typeOfHome ?? data?.typeOfHome;
+  return (v == null || v === '') ? '' : String(v);
+}
+
 // The "deemedAndModeledKwhSavings" incentive carries a metadataJSON blob — a JSON
 // array of {key, value}. Both the reporting basis % and the yearly cost savings are
 // read out of it, so the find/parse/find lives here once. Returns [] on any
@@ -881,7 +886,12 @@ async function fetchMeasures(rawIds) {
   activeJobIds = jobIds;
   // Capture the summary context now, against the job actually on screen, so later
   // re-renders (sort, collapse) can't pick up a different job's numbers.
-  measuresCtx = { ...getReportingContext(combinedData), stage: stageLabel(combinedData) };
+  measuresCtx = {
+    ...getReportingContext(combinedData),
+    stage: stageLabel(combinedData),
+    typeOfHome: typeOfHomeLabel(combinedData),
+    hvacType: classifyHvac(combinedData)
+  };
   sortKey = null;
   const errNote = errors.length ? ` · ${errors.length} failed` : '';
   setBadge(errors.length ? 'err' : 'ok', `${measureRows.length} line items${errNote}`);
@@ -905,16 +915,20 @@ function buildCombinedSummary() {
   let h = '<div class="combined-summary">';
 
   if (!multi && measuresCtx) {
-    const { stage, tier, tierLabel, basisLabel, basisClass } = measuresCtx;
+    const { stage, tier, tierLabel, basisLabel, basisClass, typeOfHome, hvacType } = measuresCtx;
     const farmworker = isFarmworkerProgram();
     const tierBadgeClass = tier === 'deep' ? 'basis-saved' : tier === 'plus' ? 'basis-deemed' : 'basis-warn';
+    const factBadge = (label, value) =>
+      `<div class="csum-basis" style="margin-bottom:0;background:#f0f0f0;color:#444">${label}: <strong>${esc(value)}</strong></div>`;
 
     h += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">`;
-    if (stage) h += `<div class="csum-basis" style="margin-bottom:0;background:#f0f0f0;color:#444">Stage: <strong>${esc(stage)}</strong></div>`;
+    if (stage) h += factBadge('Stage', stage);
     if (!farmworker) {
       h += `<div class="csum-basis ${basisClass}" style="margin-bottom:0">Reporting basis: <strong>${basisLabel}</strong></div>`;
-      h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Customer tier: <strong>${tierLabel}</strong></div>`;
+      h += `<div class="csum-basis ${tierBadgeClass}" style="margin-bottom:0">Project Path: <strong>${esc(tierLabel)}</strong></div>`;
     }
+    if (typeOfHome) h += factBadge('Type of home', typeOfHome);
+    if (hvacType) h += factBadge('HVAC type', hvacType);
     h += `</div>`;
   }
 
@@ -1532,8 +1546,7 @@ async function exportXlsx() {
 
     // Sheet1: AuditId, Path, Savings %, TypeOfHome, HVAC
     const path = tier === 'deep' ? 'Pilot Deep' : tier === 'plus' ? 'Pilot Plus' : '';
-    const typeOfHome = data?.house?.typeOfHome ?? data?.typeOfHome ?? '';
-    mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHome, classifyHvac(data)]);
+    mainOut.push([jobId, path, pct != null ? +pct.toFixed(2) : '', typeOfHomeLabel(data), classifyHvac(data)]);
 
     // Column order MUST match sheet2's header row (A..S), which is the reporting
     // upload schema in A..J followed by the backing detail in K..S:

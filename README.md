@@ -46,6 +46,20 @@ To add/remove a teammate later: edit `ALLOWED_EMAILS` in `wrangler.toml` and `np
 
 Leave the proxy terminal running while you use the inspector. Exports (CSV/XLSX) are saved into the repo's `exports/` folder in this mode.
 
+### Portable USB (Windows)
+
+Copy the project folder onto a stick and run it on a PC that does **not** have Node installed. The stick still needs internet (the proxy calls `api.snuggpro.com`) and should be writable (exports).
+
+**Once**, on a machine with internet:
+
+1. Copy this folder to the USB drive.
+2. Copy `.env.example` to `.env` and fill in your keys (keep the stick private — `.env` holds live API keys).
+3. Double-click `setup-portable.bat`. It downloads official Node LTS into `runtime/` (SHA256-checked, not committed) and runs `npm install --omit=dev` onto the stick.
+
+**On any Windows PC after that:** double-click `start-portable.bat`. It starts `proxy.js` with the stick's `runtime\node.exe` (or system Node if `runtime\` is missing), then opens `http://localhost:3001`. Close that window to stop. If 3001 is already in use it just opens the browser.
+
+`runtime/` is gitignored. Re-run setup with `setup-portable.bat -Force` to replace Node. This path is `proxy.js` only — `start.bat` / Wrangler are not portable.
+
 **Alternative: run the hosted stack locally.** `npx wrangler dev` serves the Worker (UI + email login + proxy) at `http://localhost:8787`; set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the login gate when working solo. On Windows, `start.bat` does checkout/pull/install and launches `wrangler dev` on port 2023 (`stop.bat` / `restart.bat` manage it).
 
 ## Usage
@@ -85,6 +99,7 @@ Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into 
 - `proxy.js` — local signing proxy: serves UI, templates, `/programs`, and saves exports
 - `exports/` — where local-mode CSV/XLSX exports are saved (contents gitignored)
 - `start.bat` / `stop.bat` / `restart.bat` — Windows one-click launchers for `wrangler dev` (port 2023)
+- `setup-portable.bat` / `start-portable.bat` — USB prep (download Node into `runtime/`) and double-click launch of `proxy.js`
 - `.env` — your API keys for `proxy.js` (gitignored, never committed)
 - `.env.example` — template for `proxy.js`
 - `.dev.vars` / `.dev.vars.example` — secrets for local `wrangler dev` (gitignored)

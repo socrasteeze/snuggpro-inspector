@@ -7,11 +7,11 @@ Guidance for Claude Code when working in this repository.
 A tool for inspecting SnuggPro energy-audit jobs via the SnuggPro API. The signing proxy exists because SnuggPro's API has no CORS support. Two ways to run it:
 
 1. **Hosted (team) — `worker.js` + `wrangler.toml`.** A Cloudflare Worker that (a) gates access behind an email one-time-code login restricted to an `ALLOWED_EMAILS` allowlist, (b) serves the UI from `public/` as a static asset, and (c) signs (HMAC-SHA256) and forwards `/proxy/*` to `https://api.snuggpro.com`. Same origin as the UI, so no CORS dance. Secrets (a public/private key pair per program — `REGION1_*`, `REGION2_*`, `SDGE_*`, `SCE_*` — plus `SESSION_SECRET`, `EMAIL_API_KEY`) live as Wrangler secrets. This is how the team uses it — `npx wrangler deploy`.
-2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` (auto-binds the next port if busy) that serves the UI same-origin at `/`, the program list at `/programs`, the XLSX templates, and the signing proxy at `/proxy/*` with keys from `.env`; `POST /exports` saves export files into `exports/`. No login.
+2. **Local (solo) — `proxy.js`.** A Node HTTP server on `localhost:3001` (auto-binds the next port if busy) that serves the UI same-origin at `/`, the program list at `/programs`, the XLSX templates, and the signing proxy at `/proxy/*` with keys from `.env`; `POST /exports` saves export files into `exports/`. No login. Windows USB launch: `setup-portable.bat` (once) downloads Node LTS into gitignored `runtime/` and installs deps; `start-portable.bat` runs `proxy.js` from that runtime.
 
 The browser UI is `public/index.html` — a single-file vanilla-JS app (no framework, no build step) that calls the proxy at the same-origin `/proxy` path (with `?program=` from the program switcher) and renders job data, including a flattened Measures Table and Usage/Billing view with CSV and template-based XLSX export.
 
-There is no build, bundler, or test runner. Edit files and reload. Local runs: `npm start` → `http://localhost:3001` (no login), or `npx wrangler dev` → `localhost:8787` to exercise the hosted login flow (set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip it; `start.bat`/`stop.bat`/`restart.bat` use port 2023 on Windows).
+There is no build, bundler, or test runner. Edit files and reload. Local runs: `npm start` → `http://localhost:3001` (no login), or `npx wrangler dev` → `localhost:8787` to exercise the hosted login flow (set `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip it; `start.bat`/`stop.bat`/`restart.bat` use port 2023 on Windows). USB: `setup-portable.bat` then `start-portable.bat` (still needs internet for the API).
 
 ## Running it
 
@@ -25,13 +25,13 @@ npx wrangler deploy
 ```
 See README "Team deployment" for the full walkthrough (SendGrid sender, adding teammates).
 
-**Local (solo, offline):**
+**Local (solo, USB or a machine with Node):**
 ```
 npm install
 cp .env.example .env   # fill in real keys
 npm start              # proxy.js serves UI + proxy at http://localhost:3001, no login
 ```
-(To test the hosted flow locally instead: `npx wrangler dev` on :8787, with `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the email login.)
+Windows USB (no Node on the host): copy the folder + `.env` to the stick, run `setup-portable.bat` once, then `start-portable.bat`. (To test the hosted flow locally instead: `npx wrangler dev` on :8787, with `LOCAL_BYPASS_AUTH=true` in `.dev.vars` to skip the email login.)
 
 ## Architecture and key invariants
 
@@ -40,6 +40,7 @@ npm start              # proxy.js serves UI + proxy at http://localhost:3001, no
 - Header: `Authorization: Credential={public},Signature={sig}` plus `X-Date: {same timestamp}`.
 - The timestamp used in the signature MUST be the same one sent in `X-Date`. Do not regenerate it between signing and sending. (`worker.js` reuses one `date` value; `proxy.js` likewise.)
 - Keys live only in `.env` (proxy) or Wrangler secrets (worker). Never hardcode them in `proxy.js`, `worker.js`, or the HTML. Never commit `.env` or `.dev.vars`.
+- `proxy.js` loads `.env` from `__dirname` (not cwd) so USB / shortcut launches still find keys. `runtime/` is a downloaded Node tree — never commit it.
 
 ### Worker login (email one-time code)
 - Login is gated by `ALLOWED_EMAILS` (comma-separated, in `wrangler.toml`). The allowlist is re-checked on **every** request, so removing an email + redeploy revokes access immediately.

@@ -1,5 +1,8 @@
 node_modules/
 
+# Portable USB Node runtime (downloaded by setup-portable.bat, not committed)
+runtime/
+
 # Secrets — never commit
 .env
 .dev.vars

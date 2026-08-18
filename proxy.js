@@ -4,13 +4,14 @@
 //
 // Keys are loaded from .env (see .env.example). Never commit .env.
 
-require('dotenv').config();
+const path = require('path');
+// Load .env from this file's folder (not cwd) so USB / shortcut launches still find keys.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 const fs = require('fs');
-const path = require('path');
 
 const PORT = process.env.PORT || 3001;
 const EXPORTS_DIR = path.join(__dirname, 'exports');
@@ -40,7 +41,11 @@ Object.entries(PROGRAMS).forEach(([key, p]) => {
   console.log(`  ${key}: ${status}`);
 });
 
-if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR);
+try {
+  if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR);
+} catch (e) {
+  console.warn(`Could not create exports/: ${e.message} (CSV/XLSX will download in the browser)`);
+}
 
 function signRequest(programKey) {
   const prog = PROGRAMS[programKey] || PROGRAMS[DEFAULT_PROGRAM];
@@ -99,7 +104,14 @@ const server = http.createServer((req, res) => {
     const chunks = [];
     req.on('data', c => chunks.push(c));
     req.on('end', () => {
-      fs.writeFileSync(path.join(EXPORTS_DIR, filename), Buffer.concat(chunks));
+      try {
+        fs.writeFileSync(path.join(EXPORTS_DIR, filename), Buffer.concat(chunks));
+      } catch (e) {
+        console.warn(`Could not save exports/${filename}: ${e.message}`);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+        return;
+      }
       console.log(`-> saved exports/${filename}`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ saved: filename }));
