@@ -1,0 +1,1755 @@
+{
+ "source": "Fee-Schedule_2025-07.xlsx",
+ "measures": {
+  "energy star chest freezer 19 cu ft cf": {
+   "msrId": "WHP016",
+   "measure": "Energy Star Chest Freezer: > 19 cu ft  cf",
+   "unit": "Each",
+   "nte": 1590,
+   "eligible": true
+  },
+  "energy star chest freezer 13.1 16 cf": {
+   "msrId": "WHP014",
+   "measure": "Energy Star Chest Freezer: 13.1-16  cf",
+   "unit": "Each",
+   "nte": 1244,
+   "eligible": true
+  },
+  "energy star chest freezer 16.1 18.9 cf": {
+   "msrId": "WHP015",
+   "measure": "Energy Star Chest Freezer: 16.1-18.9  cf",
+   "unit": "Each",
+   "nte": 1414,
+   "eligible": true
+  },
+  "energy star chest freezer 5 13 cf": {
+   "msrId": "WHP013",
+   "measure": "Energy Star Chest Freezer: 5-13 cf",
+   "unit": "Each",
+   "nte": 1001,
+   "eligible": true
+  },
+  "energy star clothes washer": {
+   "msrId": "WHP010",
+   "measure": "Energy Star Clothes Washer",
+   "unit": "Each",
+   "nte": 1241,
+   "eligible": true
+  },
+  "energy star dishwashers": {
+   "msrId": "WHP011",
+   "measure": "Energy Star Dishwashers",
+   "unit": "Each",
+   "nte": 1110,
+   "eligible": true
+  },
+  "energy star he gas storage water heater 40g": {
+   "msrId": "WHP025",
+   "measure": "Energy Star HE Gas Storage Water Heater - 40G",
+   "unit": "Each",
+   "nte": 2854,
+   "eligible": true
+  },
+  "energy star he gas storage water heater 50g": {
+   "msrId": "WHP026",
+   "measure": "Energy Star HE Gas Storage Water Heater - 50G",
+   "unit": "Each",
+   "nte": 3492,
+   "eligible": true
+  },
+  "energy star refrigerators large 20 cf": {
+   "msrId": "WHP024",
+   "measure": "Energy Star Refrigerators - Large >=20 cf",
+   "unit": "Each",
+   "nte": 1563,
+   "eligible": true
+  },
+  "energy star refrigerators medium 10 14 cf": {
+   "msrId": "WHP021",
+   "measure": "Energy Star Refrigerators - Medium 10-14 cf",
+   "unit": "Each",
+   "nte": 1222,
+   "eligible": true
+  },
+  "energy star refrigerators medium 15 16.9 cf": {
+   "msrId": "WHP022",
+   "measure": "Energy Star Refrigerators - Medium 15 - 16.9 cf",
+   "unit": "Each",
+   "nte": 1376,
+   "eligible": true
+  },
+  "energy star refrigerators small 17 19.9 cf": {
+   "msrId": "WHP023",
+   "measure": "Energy Star Refrigerators - Small 17 - 19.9 cf",
+   "unit": "Each",
+   "nte": 1486,
+   "eligible": true
+  },
+  "energy star room ac 10k btu": {
+   "msrId": "WHP048",
+   "measure": "Energy Star Room AC  - 10k BTU",
+   "unit": "Each",
+   "nte": 973,
+   "eligible": true
+  },
+  "energy star room ac 12k btu": {
+   "msrId": "WHP049",
+   "measure": "Energy Star Room AC  - 12k BTU",
+   "unit": "Each",
+   "nte": 1050,
+   "eligible": true
+  },
+  "energy star room ac 15k btu": {
+   "msrId": "WHP050",
+   "measure": "Energy Star Room AC  - 15k BTU",
+   "unit": "Each",
+   "nte": 1153,
+   "eligible": true
+  },
+  "energy star room ac 6 8k btu": {
+   "msrId": "WHP047",
+   "measure": "Energy Star Room AC  - 6-8k BTU",
+   "unit": "Each",
+   "nte": 903,
+   "eligible": true
+  },
+  "energy star upright freezer 19 cu ft cf": {
+   "msrId": "WHP020",
+   "measure": "Energy Star Upright Freezer: > 19 cu ft cf",
+   "unit": "Each",
+   "nte": 1590,
+   "eligible": true
+  },
+  "energy star upright freezer 10 13 cf": {
+   "msrId": "WHP017",
+   "measure": "Energy Star Upright Freezer: 10-13 cf",
+   "unit": "Each",
+   "nte": 1084,
+   "eligible": true
+  },
+  "energy star upright freezer 13.1 16 cf": {
+   "msrId": "WHP018",
+   "measure": "Energy Star Upright Freezer: 13.1-16 cf",
+   "unit": "Each",
+   "nte": 1244,
+   "eligible": true
+  },
+  "energy star upright freezer 16.1 18.9 cf": {
+   "msrId": "WHP019",
+   "measure": "Energy Star Upright Freezer: 16.1 - 18.9 cf",
+   "unit": "Each",
+   "nte": 1414,
+   "eligible": true
+  },
+  "energy star variable speed pool pumps": {
+   "msrId": "WHP012",
+   "measure": "Energy Star Variable Speed Pool pumps",
+   "unit": "Each",
+   "nte": 1553,
+   "eligible": true
+  },
+  "evaporative cooler installation 3 000 cfm": {
+   "msrId": "WHP051",
+   "measure": "Evaporative cooler installation 3,000 CFM",
+   "unit": "Each",
+   "nte": 1584,
+   "eligible": true
+  },
+  "evaporative cooler installation 4 000 cfm": {
+   "msrId": "WHP052",
+   "measure": "Evaporative cooler installation 4,000 CFM",
+   "unit": "Each",
+   "nte": 1655,
+   "eligible": true
+  },
+  "evaporative cooler installation 5 000 cfm": {
+   "msrId": "WHP053",
+   "measure": "Evaporative cooler installation 5,000 CFM",
+   "unit": "Each",
+   "nte": 1969,
+   "eligible": true
+  },
+  "fau with he fau 100 kbtu 92 afue": {
+   "msrId": "WHP061",
+   "measure": "FAU with HE FAU, 100 KBTU 92% AFUE",
+   "unit": "Each",
+   "nte": 6047,
+   "eligible": true
+  },
+  "fau with he fau 100 kbtu 95 afue": {
+   "msrId": "WHP062",
+   "measure": "FAU with HE FAU, 100 KBTU 95% AFUE",
+   "unit": "Each",
+   "nte": 6454,
+   "eligible": true
+  },
+  "fau with he fau 40 kbtu 92 afue": {
+   "msrId": "WHP055",
+   "measure": "FAU with HE FAU, 40 KBTU 92% AFUE",
+   "unit": "Each",
+   "nte": 5541,
+   "eligible": true
+  },
+  "fau with he fau 40 kbtu 95 afue": {
+   "msrId": "WHP056",
+   "measure": "FAU with HE FAU, 40 KBTU 95% AFUE",
+   "unit": "Each",
+   "nte": 5927,
+   "eligible": true
+  },
+  "fau with he fau 60 kbtu 92 afue": {
+   "msrId": "WHP057",
+   "measure": "FAU with HE FAU, 60 KBTU 92% AFUE",
+   "unit": "Each",
+   "nte": 5666,
+   "eligible": true
+  },
+  "fau with he fau 60 kbtu 95 afue": {
+   "msrId": "WHP058",
+   "measure": "FAU with HE FAU, 60 KBTU 95% AFUE",
+   "unit": "Each",
+   "nte": 6063,
+   "eligible": true
+  },
+  "fau with he fau 80 kbtu 92 afue": {
+   "msrId": "WHP059",
+   "measure": "FAU with HE FAU, 80 KBTU 92% AFUE",
+   "unit": "Each",
+   "nte": 5911,
+   "eligible": true
+  },
+  "fau with he fau 80 kbtu 95 afue": {
+   "msrId": "WHP060",
+   "measure": "FAU with HE FAU, 80 KBTU 95% AFUE",
+   "unit": "Each",
+   "nte": 6308,
+   "eligible": true
+  },
+  "he wall furnace 82 afue": {
+   "msrId": "WHP054",
+   "measure": "HE Wall Furnace 82% AFUE",
+   "unit": "Each",
+   "nte": 5224,
+   "eligible": true
+  },
+  "high efficiency windows": {
+   "msrId": "WHP125",
+   "measure": "High Efficiency Windows",
+   "unit": "Per Square Foot",
+   "nte": 59.7,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 2.5 ton": {
+   "msrId": "WHP064",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 2 1/2 Ton",
+   "unit": "Each",
+   "nte": 10246,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 2 ton": {
+   "msrId": "WHP063",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 2 Ton",
+   "unit": "Each",
+   "nte": 9823,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 3.5 ton": {
+   "msrId": "WHP066",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 3 1/2 Ton",
+   "unit": "Each",
+   "nte": 11136,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 3 ton": {
+   "msrId": "WHP065",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 3 Ton",
+   "unit": "Each",
+   "nte": 10577,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 4 ton": {
+   "msrId": "WHP067",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 4 Ton",
+   "unit": "Each",
+   "nte": 11591,
+   "eligible": true
+  },
+  "package g e with 16 seer 80 afue 5 ton": {
+   "msrId": "WHP068",
+   "measure": "Package G/E with 16+ SEER/80%+ AFUE - 5 Ton",
+   "unit": "Each",
+   "nte": 12617,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 2.5 ton": {
+   "msrId": "WHP070",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 2 1/2 Ton",
+   "unit": "Each",
+   "nte": 9154,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 2 ton": {
+   "msrId": "WHP069",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 2 Ton",
+   "unit": "Each",
+   "nte": 8971,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 3.5 ton": {
+   "msrId": "WHP072",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 3 1/2 Ton",
+   "unit": "Each",
+   "nte": 9752,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 3 ton": {
+   "msrId": "WHP071",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 3 Ton",
+   "unit": "Each",
+   "nte": 9372,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 4 ton": {
+   "msrId": "WHP073",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 4 Ton",
+   "unit": "Each",
+   "nte": 10203,
+   "eligible": true
+  },
+  "package hp with 16 seer 8.5 hspf 5 ton": {
+   "msrId": "WHP074",
+   "measure": "Package HP with 16+ SEER/8.5+ HSPF - 5 Ton",
+   "unit": "Each",
+   "nte": 11505,
+   "eligible": true
+  },
+  "replace existing electric w h with hp water heater 40g": {
+   "msrId": "WHP027",
+   "measure": "Replace existing electric W/H with HP Water Heater - 40G",
+   "unit": "Each",
+   "nte": 5546,
+   "eligible": true
+  },
+  "replace existing electric w h with hp water heater 50g": {
+   "msrId": "WHP028",
+   "measure": "Replace existing electric W/H with HP Water Heater - 50G",
+   "unit": "Each",
+   "nte": 5842,
+   "eligible": true
+  },
+  "replace existing electric w h with hp water heater 80g": {
+   "msrId": "WHP029",
+   "measure": "Replace existing electric W/H with HP Water Heater - 80G",
+   "unit": "Each",
+   "nte": 7059,
+   "eligible": true
+  },
+  "replace with gas tankless water heater": {
+   "msrId": "WHP030",
+   "measure": "Replace with Gas Tankless Water Heater",
+   "unit": "Each",
+   "nte": 5546,
+   "eligible": true
+  },
+  "replace with solar water heating w gas storage back up": {
+   "msrId": "WHP031",
+   "measure": "Replace with Solar Water Heating w/Gas storage back up",
+   "unit": "Each",
+   "nte": 8821,
+   "eligible": true
+  },
+  "replace with solar water heating w gas tankless back up": {
+   "msrId": "WHP032",
+   "measure": "Replace with Solar Water Heating w/Gas tankless back up",
+   "unit": "Each",
+   "nte": 9398,
+   "eligible": true
+  },
+  "split ac only with 16 seer 2.5 ton": {
+   "msrId": "WHP076",
+   "measure": "Split AC Only with 16+ SEER - 2 1/2 Ton",
+   "unit": "Each",
+   "nte": 5928,
+   "eligible": true
+  },
+  "split ac only with 16 seer 2 ton": {
+   "msrId": "WHP075",
+   "measure": "Split AC Only with 16+ SEER - 2 Ton",
+   "unit": "Each",
+   "nte": 5874,
+   "eligible": true
+  },
+  "split ac only with 16 seer 3.5 ton": {
+   "msrId": "WHP078",
+   "measure": "Split AC Only with 16+ SEER - 3 1/2 Ton",
+   "unit": "Each",
+   "nte": 6351,
+   "eligible": true
+  },
+  "split ac only with 16 seer 3 ton": {
+   "msrId": "WHP077",
+   "measure": "Split AC Only with 16+ SEER - 3 Ton",
+   "unit": "Each",
+   "nte": 6226,
+   "eligible": true
+  },
+  "split ac only with 16 seer 4 ton": {
+   "msrId": "WHP079",
+   "measure": "Split AC Only with 16+ SEER - 4 Ton",
+   "unit": "Each",
+   "nte": 6606,
+   "eligible": true
+  },
+  "split ac only with 16 seer 5 ton": {
+   "msrId": "WHP080",
+   "measure": "Split AC Only with 16+ SEER - 5 Ton",
+   "unit": "Each",
+   "nte": 7138,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 2.5 ton": {
+   "msrId": "WHP082",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 2 1/2 Ton",
+   "unit": "Each",
+   "nte": 8611,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 2 ton": {
+   "msrId": "WHP081",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 2 Ton",
+   "unit": "Each",
+   "nte": 8280,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 3.5 ton": {
+   "msrId": "WHP084",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 3 1/2 Ton",
+   "unit": "Each",
+   "nte": 9381,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 3 ton": {
+   "msrId": "WHP083",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 3 Ton",
+   "unit": "Each",
+   "nte": 8904,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 4 ton": {
+   "msrId": "WHP085",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 4 Ton",
+   "unit": "Each",
+   "nte": 9769,
+   "eligible": true
+  },
+  "split hp system with 16 seer 8.8 hspf 5 ton": {
+   "msrId": "WHP086",
+   "measure": "Split HP System with 16+ SEER/8.8+ HSPF - 5 Ton",
+   "unit": "Each",
+   "nte": 11396,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 2.5 ton": {
+   "msrId": "WHP088",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 2 1/2 Ton",
+   "unit": "Each",
+   "nte": 8613,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 2 ton": {
+   "msrId": "WHP087",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 2 Ton",
+   "unit": "Each",
+   "nte": 8461,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 3.5 ton": {
+   "msrId": "WHP090",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 3 1/2 Ton",
+   "unit": "Each",
+   "nte": 10024,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 3 ton": {
+   "msrId": "WHP089",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 3 Ton",
+   "unit": "Each",
+   "nte": 9318,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 4 ton": {
+   "msrId": "WHP091",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 4 Ton",
+   "unit": "Each",
+   "nte": 10349,
+   "eligible": true
+  },
+  "split system with 16 seer 92 afue 5 ton": {
+   "msrId": "WHP092",
+   "measure": "Split System with 16+ SEER/92%+ AFUE - 5 Ton",
+   "unit": "Each",
+   "nte": 10566,
+   "eligible": true
+  },
+  "whole house fan": {
+   "msrId": "WHP093",
+   "measure": "Whole House Fan",
+   "unit": "Each",
+   "nte": 3125,
+   "eligible": true
+  },
+  "air sealing envelope repair miscelleaneous w pm approval": {
+   "msrId": "WHP105",
+   "measure": "Air Sealing / Envelope Repair Miscelleaneous w/PM Approval",
+   "unit": "T & M",
+   "nte": null,
+   "eligible": false
+  },
+  "appliance door foam tape vstrip": {
+   "msrId": "WHP106",
+   "measure": "Appliance Door Foam Tape/Vstrip",
+   "unit": "Each",
+   "nte": 16.1,
+   "eligible": false
+  },
+  "appliance door latch": {
+   "msrId": "WHP141",
+   "measure": "Appliance Door Latch",
+   "unit": "Each",
+   "nte": 16.2,
+   "eligible": false
+  },
+  "appliance door rigid gasket": {
+   "msrId": "WHP107",
+   "measure": "Appliance Door Rigid Gasket",
+   "unit": "Each",
+   "nte": 67,
+   "eligible": false
+  },
+  "attic access new": {
+   "msrId": "WHP142",
+   "measure": "Attic Access New",
+   "unit": "Each",
+   "nte": 105,
+   "eligible": false
+  },
+  "attic cover replacement": {
+   "msrId": "WHP108",
+   "measure": "Attic Cover Replacement",
+   "unit": "Each",
+   "nte": 45,
+   "eligible": false
+  },
+  "attic insulation add r 11": {
+   "msrId": "WHP109",
+   "measure": "Attic Insulation, Add R-11",
+   "unit": "Per Square Foot",
+   "nte": 2.2,
+   "eligible": false
+  },
+  "attic insulation add r 19": {
+   "msrId": "WHP110",
+   "measure": "Attic Insulation, Add R-19",
+   "unit": "Per Square Foot",
+   "nte": 2.25,
+   "eligible": false
+  },
+  "attic insulation add r 30": {
+   "msrId": "WHP111",
+   "measure": "Attic Insulation, Add R-30",
+   "unit": "Per Square Foot",
+   "nte": 2.3,
+   "eligible": false
+  },
+  "attic insulation add r 38": {
+   "msrId": "WHP112",
+   "measure": "Attic Insulation, Add R-38",
+   "unit": "Per Square Foot",
+   "nte": 2.35,
+   "eligible": false
+  },
+  "attic insulation add r 49": {
+   "msrId": "WHP113",
+   "measure": "Attic Insulation, Add R-49",
+   "unit": "Per Square Foot",
+   "nte": 2.5,
+   "eligible": false
+  },
+  "attic light": {
+   "msrId": "WHP143",
+   "measure": "Attic Light",
+   "unit": "Each",
+   "nte": 96,
+   "eligible": false
+  },
+  "attic platform": {
+   "msrId": "WHP144",
+   "measure": "Attic Platform",
+   "unit": "Each",
+   "nte": 96,
+   "eligible": false
+  },
+  "blower door test": {
+   "msrId": "WHP003",
+   "measure": "Blower Door Test",
+   "unit": "Each",
+   "nte": 178,
+   "eligible": false
+  },
+  "building department permit": {
+   "msrId": "WHP008",
+   "measure": "Building Department Permit",
+   "unit": "Each",
+   "nte": null,
+   "eligible": false
+  },
+  "casing w caulking door": {
+   "msrId": "WHP115",
+   "measure": "Casing w/ Caulking- Door",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "casing w caulking window": {
+   "msrId": "WHP116",
+   "measure": "Casing w/ Caulking- Window",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "caulking": {
+   "msrId": "WHP117",
+   "measure": "Caulking",
+   "unit": "Per Linear Foot",
+   "nte": 1.6,
+   "eligible": false
+  },
+  "co smoke alarm combo": {
+   "msrId": "WHP101",
+   "measure": "CO/Smoke Alarm Combo",
+   "unit": "Each",
+   "nte": 87.9,
+   "eligible": false
+  },
+  "comprehensive home health and safety check up": {
+   "msrId": "WHP102",
+   "measure": "Comprehensive Home Health and Safety Check-up",
+   "unit": "Per Home",
+   "nte": 83,
+   "eligible": false
+  },
+  "condenser coil cleaning": {
+   "msrId": "WHP033",
+   "measure": "Condenser Coil Cleaning",
+   "unit": "Each",
+   "nte": 215,
+   "eligible": false
+  },
+  "cva repair furnace": {
+   "msrId": "WHP145",
+   "measure": "CVA Repair – Furnace",
+   "unit": "Each Appliance",
+   "nte": 78,
+   "eligible": false
+  },
+  "cva repair water heater": {
+   "msrId": "WHP146",
+   "measure": "CVA Repair- Water Heater",
+   "unit": "Each Appliance",
+   "nte": 78,
+   "eligible": false
+  },
+  "decrease refrigerant charge": {
+   "msrId": "WHP036",
+   "measure": "Decrease Refrigerant Charge",
+   "unit": "Each",
+   "nte": 94,
+   "eligible": false
+  },
+  "door deadbolt": {
+   "msrId": "WHP147",
+   "measure": "Door Deadbolt",
+   "unit": "Each",
+   "nte": 45,
+   "eligible": false
+  },
+  "door double slide bolt": {
+   "msrId": "WHP148",
+   "measure": "Door Double Slide Bolt",
+   "unit": "Each",
+   "nte": 12.5,
+   "eligible": false
+  },
+  "door handle": {
+   "msrId": "WHP149",
+   "measure": "Door Handle",
+   "unit": "Each",
+   "nte": 11,
+   "eligible": false
+  },
+  "door hinge locking pin": {
+   "msrId": "WHP150",
+   "measure": "Door Hinge Locking Pin",
+   "unit": "Each",
+   "nte": 16.2,
+   "eligible": false
+  },
+  "door hinges loose pin": {
+   "msrId": "WHP151",
+   "measure": "Door Hinges Loose Pin",
+   "unit": "Each",
+   "nte": 13.1,
+   "eligible": false
+  },
+  "door hinges springs": {
+   "msrId": "WHP152",
+   "measure": "Door Hinges Springs",
+   "unit": "Each",
+   "nte": 23,
+   "eligible": false
+  },
+  "door jambs and caulking": {
+   "msrId": "WHP153",
+   "measure": "Door Jambs and Caulking",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "door lockset": {
+   "msrId": "WHP154",
+   "measure": "Door Lockset",
+   "unit": "Each",
+   "nte": 45.55,
+   "eligible": false
+  },
+  "door lockset brace": {
+   "msrId": "WHP155",
+   "measure": "Door Lockset Brace",
+   "unit": "Each",
+   "nte": 39.2,
+   "eligible": false
+  },
+  "door shoe": {
+   "msrId": "WHP118",
+   "measure": "Door Shoe",
+   "unit": "Each",
+   "nte": 28.2,
+   "eligible": false
+  },
+  "door stop and caulking": {
+   "msrId": "WHP119",
+   "measure": "Door Stop and Caulking",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "door striker plate": {
+   "msrId": "WHP156",
+   "measure": "Door Striker Plate",
+   "unit": "Each",
+   "nte": 13.1,
+   "eligible": false
+  },
+  "door sweep": {
+   "msrId": "WHP120",
+   "measure": "Door Sweep",
+   "unit": "Each",
+   "nte": 23.3,
+   "eligible": false
+  },
+  "door threshold": {
+   "msrId": "WHP121",
+   "measure": "Door Threshold",
+   "unit": "Each",
+   "nte": 47,
+   "eligible": false
+  },
+  "dryer vent only": {
+   "msrId": "WHP157",
+   "measure": "Dryer Vent - Only",
+   "unit": "Each",
+   "nte": 31.1,
+   "eligible": false
+  },
+  "dryer vent opening w vent": {
+   "msrId": "WHP158",
+   "measure": "Dryer Vent – Opening w/ Vent",
+   "unit": "Each",
+   "nte": 86,
+   "eligible": false
+  },
+  "duct insulation r 8": {
+   "msrId": "WHP042",
+   "measure": "Duct Insulation (R-8)",
+   "unit": "Per Linear Foot",
+   "nte": 3.6,
+   "eligible": false
+  },
+  "duct repair": {
+   "msrId": "WHP159",
+   "measure": "Duct Repair",
+   "unit": "Each",
+   "nte": 32.9,
+   "eligible": false
+  },
+  "duct replacement 11 to 14 diameter flexible r8": {
+   "msrId": "WHP160",
+   "measure": "Duct Replacement, 11\" to 14\" Diameter (Flexible) - R8",
+   "unit": "Per Linear Foot",
+   "nte": 11,
+   "eligible": false
+  },
+  "duct replacement 8 to 10 diameter flexible r8": {
+   "msrId": "WHP161",
+   "measure": "Duct Replacement, 8\" to 10\" Diameter (Flexible) - R8",
+   "unit": "Per Linear Foot",
+   "nte": 9.2,
+   "eligible": false
+  },
+  "duct replacement up to 6 diameter flexible r8": {
+   "msrId": "WHP162",
+   "measure": "Duct Replacement, Up to 6\" Diameter (Flexible) - R8",
+   "unit": "Per Linear Foot",
+   "nte": 7.8,
+   "eligible": false
+  },
+  "duct sealing 120 minutes": {
+   "msrId": "WHP045",
+   "measure": "Duct Sealing - 120 Minutes",
+   "unit": "Per System",
+   "nte": 397,
+   "eligible": false
+  },
+  "duct sealing 60 minutes": {
+   "msrId": "WHP043",
+   "measure": "Duct Sealing - 60 Minutes",
+   "unit": "Per System",
+   "nte": 287,
+   "eligible": false
+  },
+  "duct sealing 90 minutes": {
+   "msrId": "WHP044",
+   "measure": "Duct Sealing - 90 Minutes",
+   "unit": "Per System",
+   "nte": 340,
+   "eligible": false
+  },
+  "duct test title 24": {
+   "msrId": "WHP046",
+   "measure": "Duct Test - Title 24",
+   "unit": "Per System",
+   "nte": 157,
+   "eligible": false
+  },
+  "duct test with energy audit": {
+   "msrId": "WHP004",
+   "measure": "Duct Test - with Energy Audit",
+   "unit": "Per System",
+   "nte": 157,
+   "eligible": false
+  },
+  "ecm blower motor": {
+   "msrId": "WHP039",
+   "measure": "ECM Blower Motor",
+   "unit": "Each",
+   "nte": 666,
+   "eligible": false
+  },
+  "efficient smart fan controller": {
+   "msrId": "WHP040",
+   "measure": "Efficient (SMART) Fan Controller",
+   "unit": "Each",
+   "nte": 291,
+   "eligible": false
+  },
+  "energy audit": {
+   "msrId": "WHP002",
+   "measure": "Energy Audit",
+   "unit": "Each",
+   "nte": 392,
+   "eligible": false
+  },
+  "energy star ceiling fans": {
+   "msrId": "WHP009",
+   "measure": "Energy Star Ceiling Fans",
+   "unit": "Each",
+   "nte": 319,
+   "eligible": false
+  },
+  "evaporator coil cleaning": {
+   "msrId": "WHP034",
+   "measure": "Evaporator Coil Cleaning",
+   "unit": "Each",
+   "nte": 215,
+   "eligible": false
+  },
+  "exhaust vent only": {
+   "msrId": "WHP163",
+   "measure": "Exhaust Vent - Only",
+   "unit": "Each",
+   "nte": 31.4,
+   "eligible": false
+  },
+  "exhaust vent opening w vent": {
+   "msrId": "WHP164",
+   "measure": "Exhaust Vent – Opening w/Vent",
+   "unit": "Each",
+   "nte": 86,
+   "eligible": false
+  },
+  "exterior led security light photocell and motion sensor": {
+   "msrId": "WHP094",
+   "measure": "Exterior LED Security Light (photocell and motion sensor)",
+   "unit": "Each",
+   "nte": 65.5,
+   "eligible": false
+  },
+  "fau filter base fau replacement": {
+   "msrId": "WHP165",
+   "measure": "FAU Filter Base (FAU Replacement)",
+   "unit": "Each",
+   "nte": 167,
+   "eligible": false
+  },
+  "faucet aerators kitchen bath": {
+   "msrId": "WHP122",
+   "measure": "Faucet Aerators - Kitchen / Bath",
+   "unit": "Each",
+   "nte": 9.9,
+   "eligible": false
+  },
+  "floor insulation add r 19": {
+   "msrId": "WHP123",
+   "measure": "Floor Insulation, Add R-19",
+   "unit": "Per Square Foot",
+   "nte": 3.2,
+   "eligible": false
+  },
+  "furnace clean and tune": {
+   "msrId": "WHP103",
+   "measure": "Furnace Clean and Tune",
+   "unit": "Each",
+   "nte": 77,
+   "eligible": false
+  },
+  "furnace part 4 vent offset": {
+   "msrId": "WHP166",
+   "measure": "Furnace Part – 4” Vent Offset",
+   "unit": "Each",
+   "nte": 49,
+   "eligible": false
+  },
+  "furnace part 4 vent pipe 8 feet or less": {
+   "msrId": "WHP167",
+   "measure": "Furnace Part – 4” Vent Pipe-8 feet or less",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "furnace part condensate pump": {
+   "msrId": "WHP168",
+   "measure": "Furnace Part - Condensate Pump",
+   "unit": "Each",
+   "nte": 211,
+   "eligible": false
+  },
+  "furnace part cva repair": {
+   "msrId": "WHP169",
+   "measure": "Furnace Part - CVA Repair",
+   "unit": "Per Appliance",
+   "nte": 76,
+   "eligible": false
+  },
+  "furnace part fau blower door safety switch": {
+   "msrId": "WHP170",
+   "measure": "Furnace Part - FAU - Blower Door Safety Switch",
+   "unit": "Per Appliance",
+   "nte": 40.2,
+   "eligible": false
+  },
+  "furnace part fau capacitor": {
+   "msrId": "WHP171",
+   "measure": "Furnace Part – FAU - Capacitor",
+   "unit": "Per Appliance",
+   "nte": 23,
+   "eligible": false
+  },
+  "furnace part fau electrode": {
+   "msrId": "WHP172",
+   "measure": "Furnace Part – FAU - Electrode",
+   "unit": "Per Appliance",
+   "nte": 64,
+   "eligible": false
+  },
+  "furnace part fau fan center": {
+   "msrId": "WHP173",
+   "measure": "Furnace Part – FAU - Fan Center",
+   "unit": "Per Appliance",
+   "nte": 86,
+   "eligible": false
+  },
+  "furnace part fau fan relay": {
+   "msrId": "WHP174",
+   "measure": "Furnace Part – FAU - Fan Relay",
+   "unit": "Per Appliance",
+   "nte": 36.8,
+   "eligible": false
+  },
+  "furnace part fau fan switch temp actuated": {
+   "msrId": "WHP175",
+   "measure": "Furnace Part – FAU - Fan Switch (temp actuated)",
+   "unit": "Per Appliance",
+   "nte": 53,
+   "eligible": false
+  },
+  "furnace part fau door latch": {
+   "msrId": "WHP176",
+   "measure": "Furnace Part - FAU- Door Latch",
+   "unit": "Per Appliance",
+   "nte": 15.4,
+   "eligible": false
+  },
+  "furnace part fau gcv 24volt": {
+   "msrId": "WHP177",
+   "measure": "Furnace Part - FAU- GCV-24volt",
+   "unit": "Per Appliance",
+   "nte": 191,
+   "eligible": false
+  },
+  "furnace part fau gcv 5 wire": {
+   "msrId": "WHP178",
+   "measure": "Furnace Part - FAU- GCV-5 wire",
+   "unit": "Per Appliance",
+   "nte": 271,
+   "eligible": false
+  },
+  "furnace part fau hard pipe": {
+   "msrId": "WHP179",
+   "measure": "Furnace Part - FAU- Hard Pipe",
+   "unit": "Per Appliance",
+   "nte": 15.4,
+   "eligible": false
+  },
+  "furnace part fau non setback t stat": {
+   "msrId": "WHP180",
+   "measure": "Furnace Part - FAU- Non-Setback T’stat",
+   "unit": "Per Appliance",
+   "nte": 106,
+   "eligible": false
+  },
+  "furnace part fau pilot retrofit kit": {
+   "msrId": "WHP181",
+   "measure": "Furnace Part - FAU- Pilot Retrofit Kit",
+   "unit": "Per Appliance",
+   "nte": 399,
+   "eligible": false
+  },
+  "furnace part fau filter": {
+   "msrId": "WHP182",
+   "measure": "Furnace Part - FAU-Filter",
+   "unit": "Per Appliance",
+   "nte": 27.2,
+   "eligible": false
+  },
+  "furnace part fau flame sensor": {
+   "msrId": "WHP183",
+   "measure": "Furnace Part - FAU-Flame Sensor",
+   "unit": "Per Appliance",
+   "nte": 80,
+   "eligible": false
+  },
+  "furnace part fau hot surface igniter": {
+   "msrId": "WHP184",
+   "measure": "Furnace Part - FAU-Hot Surface Igniter",
+   "unit": "Per Appliance",
+   "nte": 71,
+   "eligible": false
+  },
+  "furnace part fau setback t stat": {
+   "msrId": "WHP185",
+   "measure": "Furnace Part - FAU-Setback T’stat",
+   "unit": "Per Appliance",
+   "nte": 127,
+   "eligible": false
+  },
+  "furnace part fau t stat wire": {
+   "msrId": "WHP186",
+   "measure": "Furnace Part - FAU-T’stat Wire",
+   "unit": "Per Appliance",
+   "nte": 52,
+   "eligible": false
+  },
+  "furnace part fau transformer": {
+   "msrId": "WHP187",
+   "measure": "Furnace Part - FAU-Transformer",
+   "unit": "Per Appliance",
+   "nte": 52,
+   "eligible": false
+  },
+  "furnace part ff regulator": {
+   "msrId": "WHP188",
+   "measure": "Furnace Part – FF-Regulator",
+   "unit": "Per Appliance",
+   "nte": 73,
+   "eligible": false
+  },
+  "furnace part flashing": {
+   "msrId": "WHP189",
+   "measure": "Furnace Part - Flashing",
+   "unit": "Per Appliance",
+   "nte": 55,
+   "eligible": false
+  },
+  "furnace part flex connector": {
+   "msrId": "WHP190",
+   "measure": "Furnace Part - Flex Connector",
+   "unit": "Per Appliance",
+   "nte": 34.7,
+   "eligible": false
+  },
+  "furnace part floor furnace removal fee paid to compensate contractor for removing the existing floor furnace when that furnace is replaced.": {
+   "msrId": "WHP191",
+   "measure": "Furnace Part - Floor Furnace Removal: Fee paid to compensate Contractor for removing the existing floor furnace when that furnace is\r\nreplaced.",
+   "unit": "Per Appliance",
+   "nte": 125,
+   "eligible": false
+  },
+  "furnace part floor furnace repair fee fee paid to compensate contractor for the extra time effort accessing the floor furnace. paid only if the floor furnace is repaired.": {
+   "msrId": "WHP192",
+   "measure": "Furnace Part - Floor Furnace Repair Fee: Fee paid to compensate Contractor for the extra time/effort accessing the floor furnace. Paid only if the floor furnace is repaired.",
+   "unit": "Per Appliance",
+   "nte": 37.9,
+   "eligible": false
+  },
+  "furnace part free standing kit only installed with single wall furnace.": {
+   "msrId": "WHP193",
+   "measure": "Furnace Part - Free Standing Kit: Only Installed with Single Wall Furnace.",
+   "unit": "Each",
+   "nte": 409,
+   "eligible": false
+  },
+  "furnace part gcv millivolt": {
+   "msrId": "WHP194",
+   "measure": "Furnace Part – GCV/Millivolt",
+   "unit": "Per Appliance",
+   "nte": 338,
+   "eligible": false
+  },
+  "furnace part line valve w connector": {
+   "msrId": "WHP195",
+   "measure": "Furnace Part – Line Valve w/Connector",
+   "unit": "Per Appliance",
+   "nte": 52,
+   "eligible": false
+  },
+  "furnace part pig tail": {
+   "msrId": "WHP196",
+   "measure": "Furnace Part - Pig Tail",
+   "unit": "Per Appliance",
+   "nte": 32.4,
+   "eligible": false
+  },
+  "furnace part pilot tubing": {
+   "msrId": "WHP197",
+   "measure": "Furnace Part - Pilot Tubing",
+   "unit": "Per Appliance",
+   "nte": 24.6,
+   "eligible": false
+  },
+  "furnace part r l pilot assembly": {
+   "msrId": "WHP198",
+   "measure": "Furnace Part - R/L Pilot Assembly",
+   "unit": "Per Appliance",
+   "nte": 97,
+   "eligible": false
+  },
+  "furnace part rear register kit only installed with single wall furnace.": {
+   "msrId": "WHP199",
+   "measure": "Furnace Part - Rear Register Kit: Only Installed with Single Wall Furnace.",
+   "unit": "Each",
+   "nte": 134,
+   "eligible": false
+  },
+  "furnace part storm collar": {
+   "msrId": "WHP200",
+   "measure": "Furnace Part - Storm Collar",
+   "unit": "Per Appliance",
+   "nte": 18.8,
+   "eligible": false
+  },
+  "furnace part t stat raceway": {
+   "msrId": "WHP201",
+   "measure": "Furnace Part – T’stat Raceway",
+   "unit": "Per Appliance",
+   "nte": 41,
+   "eligible": false
+  },
+  "furnace part thermocouple": {
+   "msrId": "WHP202",
+   "measure": "Furnace Part - Thermocouple",
+   "unit": "Per Appliance",
+   "nte": 29.8,
+   "eligible": false
+  },
+  "furnace part vent cap": {
+   "msrId": "WHP203",
+   "measure": "Furnace Part - Vent Cap",
+   "unit": "Per Appliance",
+   "nte": 38.4,
+   "eligible": false
+  },
+  "furnace part vent clearance repair": {
+   "msrId": "WHP204",
+   "measure": "Furnace Part - Vent Clearance Repair",
+   "unit": "Per Appliance",
+   "nte": 37.9,
+   "eligible": false
+  },
+  "furnace part w f pilot generator cartridge": {
+   "msrId": "WHP205",
+   "measure": "Furnace Part – W/F Pilot Generator/Cartridge",
+   "unit": "Per Appliance",
+   "nte": 80,
+   "eligible": false
+  },
+  "furnace part w f t stat wires": {
+   "msrId": "WHP206",
+   "measure": "Furnace Part - W/F T'stat Wires",
+   "unit": "Per Appliance",
+   "nte": 27.4,
+   "eligible": false
+  },
+  "furnace part w f high limit vent switch": {
+   "msrId": "WHP207",
+   "measure": "Furnace Part – W/F-High Limit/Vent Switch",
+   "unit": "Per Appliance",
+   "nte": 39.4,
+   "eligible": false
+  },
+  "furnace part w f pilot assembly w generator": {
+   "msrId": "WHP208",
+   "measure": "Furnace Part – W/F-Pilot Assembly w/Generator",
+   "unit": "Per Appliance",
+   "nte": 109,
+   "eligible": false
+  },
+  "furnace part w f t stat": {
+   "msrId": "WHP209",
+   "measure": "Furnace Part - W/F-T'stat",
+   "unit": "Per Appliance",
+   "nte": 76,
+   "eligible": false
+  },
+  "furnace part wall strap": {
+   "msrId": "WHP210",
+   "measure": "Furnace Part - Wall Strap",
+   "unit": "Per Appliance",
+   "nte": 31.6,
+   "eligible": false
+  },
+  "gas logs damper clamp": {
+   "msrId": "WHP211",
+   "measure": "Gas Logs - Damper Clamp",
+   "unit": "Each",
+   "nte": 13.1,
+   "eligible": false
+  },
+  "glass replacement": {
+   "msrId": "WHP124",
+   "measure": "Glass Replacement",
+   "unit": "Per Square Foot",
+   "nte": 32,
+   "eligible": false
+  },
+  "glazing compound sash sash": {
+   "msrId": "WHP212",
+   "measure": "Glazing Compound Sash/Sash",
+   "unit": "Per Window",
+   "nte": 12.3,
+   "eligible": false
+  },
+  "hers testing": {
+   "msrId": "WHP249",
+   "measure": "HERS Testing",
+   "unit": "Per Home",
+   "nte": 375,
+   "eligible": false
+  },
+  "high performance cool roofs": {
+   "msrId": "WHP126",
+   "measure": "High-Performance Cool Roofs",
+   "unit": "Per Square Foot",
+   "nte": 11.1,
+   "eligible": false
+  },
+  "home energy monitor panel model": {
+   "msrId": "WHP006",
+   "measure": "Home Energy Monitor - Panel Model",
+   "unit": "Each",
+   "nte": 580,
+   "eligible": false
+  },
+  "home energy monitor plug in model": {
+   "msrId": "WHP007",
+   "measure": "Home Energy Monitor - Plug in Model",
+   "unit": "Each",
+   "nte": 78,
+   "eligible": false
+  },
+  "hp water heater upgrade electrical panel or wiring": {
+   "msrId": "WHP213",
+   "measure": "HP Water Heater - Upgrade electrical panel or wiring",
+   "unit": "Per Home",
+   "nte": 5225,
+   "eligible": false
+  },
+  "hvac replace duct system": {
+   "msrId": "WHP214",
+   "measure": "HVAC - Replace duct system",
+   "unit": "Per Home",
+   "nte": 2090,
+   "eligible": false
+  },
+  "hvac seal plenum and base": {
+   "msrId": "WHP215",
+   "measure": "HVAC - Seal Plenum and Base",
+   "unit": "Per Appliance",
+   "nte": 46,
+   "eligible": false
+  },
+  "hvac secondary drain pan": {
+   "msrId": "WHP216",
+   "measure": "HVAC - Secondary Drain Pan",
+   "unit": "Each",
+   "nte": 211,
+   "eligible": false
+  },
+  "hvac room ac repair or replace window frame": {
+   "msrId": "WHP217",
+   "measure": "HVAC Room AC - Repair or replace window frame",
+   "unit": "Each",
+   "nte": 418,
+   "eligible": false
+  },
+  "hvac system filter replacement no hvac replacement": {
+   "msrId": "WHP035",
+   "measure": "HVAC System - Filter Replacement (No HVAC Replacement)",
+   "unit": "Each",
+   "nte": 69,
+   "eligible": false
+  },
+  "increase refrigerant charge": {
+   "msrId": "WHP037",
+   "measure": "Increase Refrigerant Charge",
+   "unit": "Each",
+   "nte": 204,
+   "eligible": false
+  },
+  "insulated exterior doors includes weather stripping and hardware": {
+   "msrId": "WHP127",
+   "measure": "Insulated Exterior Doors (includes weather stripping and hardware)",
+   "unit": "Per Door",
+   "nte": 689,
+   "eligible": false
+  },
+  "kitchen exhaust dampers": {
+   "msrId": "WHP218",
+   "measure": "Kitchen Exhaust Dampers",
+   "unit": "Each",
+   "nte": 204,
+   "eligible": false
+  },
+  "led fixtures exterior": {
+   "msrId": "WHP095",
+   "measure": "LED Fixtures - Exterior",
+   "unit": "Each",
+   "nte": 119,
+   "eligible": false
+  },
+  "led fixtures interior": {
+   "msrId": "WHP096",
+   "measure": "LED Fixtures - Interior",
+   "unit": "Each",
+   "nte": 119,
+   "eligible": false
+  },
+  "led lamps 40w equivalent": {
+   "msrId": "WHP097",
+   "measure": "LED Lamps - 40w Equivalent",
+   "unit": "Each",
+   "nte": 12.9,
+   "eligible": false
+  },
+  "led lamps 60w equivalent": {
+   "msrId": "WHP098",
+   "measure": "LED Lamps - 60w Equivalent",
+   "unit": "Each",
+   "nte": 12.9,
+   "eligible": false
+  },
+  "low flow showerhead handheld": {
+   "msrId": "WHP128",
+   "measure": "Low-Flow Showerhead - Handheld",
+   "unit": "Each",
+   "nte": 45.3,
+   "eligible": false
+  },
+  "low flow showerhead regular": {
+   "msrId": "WHP129",
+   "measure": "Low-Flow Showerhead - Regular",
+   "unit": "Each",
+   "nte": 26.2,
+   "eligible": false
+  },
+  "minor home repair requires pm approval": {
+   "msrId": "WHP249",
+   "measure": "Minor Home Repair (Requires PM Approval)",
+   "unit": "Per Home",
+   "nte": null,
+   "eligible": false
+  },
+  "natural gas appliance testing": {
+   "msrId": "WHP005",
+   "measure": "Natural Gas Appliance Testing",
+   "unit": "Per Home",
+   "nte": 32,
+   "eligible": false
+  },
+  "outlet grouding ground outlet": {
+   "msrId": "WHP219",
+   "measure": "Outlet Grouding - ground outlet",
+   "unit": "Each",
+   "nte": 115,
+   "eligible": false
+  },
+  "outreach enrollment and energy education": {
+   "msrId": "WHP001",
+   "measure": "Outreach, Enrollment, and Energy Education",
+   "unit": "Per Home",
+   "nte": 209,
+   "eligible": false
+  },
+  "plenum sleeve dryer": {
+   "msrId": "WHP220",
+   "measure": "Plenum Sleeve (Dryer)",
+   "unit": "Each",
+   "nte": 154,
+   "eligible": false
+  },
+  "radiant barriers": {
+   "msrId": "WHP130",
+   "measure": "Radiant Barriers",
+   "unit": "Per Square Foot",
+   "nte": 6.9,
+   "eligible": false
+  },
+  "range hood": {
+   "msrId": "WHP221",
+   "measure": "Range Hood",
+   "unit": "Each",
+   "nte": 418,
+   "eligible": false
+  },
+  "refrigerant add": {
+   "msrId": "WHP038",
+   "measure": "Refrigerant (Add)",
+   "unit": "Ounce",
+   "nte": null,
+   "eligible": false
+  },
+  "room ac evaporative cooler cover": {
+   "msrId": "WHP131",
+   "measure": "Room AC/Evaporative Cooler Cover",
+   "unit": "Each",
+   "nte": 59.9,
+   "eligible": false
+  },
+  "seal fau platform caulking around base no hvac replacement": {
+   "msrId": "WHP132",
+   "measure": "Seal FAU Platform (Caulking Around Base)-No HVAC replacement",
+   "unit": "Each",
+   "nte": 25.1,
+   "eligible": false
+  },
+  "shower diverter": {
+   "msrId": "WHP222",
+   "measure": "Shower Diverter",
+   "unit": "Each",
+   "nte": 34.7,
+   "eligible": false
+  },
+  "showerhead adapter": {
+   "msrId": "WHP223",
+   "measure": "Showerhead Adapter",
+   "unit": "Each",
+   "nte": 15.4,
+   "eligible": false
+  },
+  "silicone caulking crack bb hole": {
+   "msrId": "WHP133",
+   "measure": "Silicone Caulking (crack/bb hole)",
+   "unit": "Each",
+   "nte": 11,
+   "eligible": false
+  },
+  "smart thermostat": {
+   "msrId": "WHP041",
+   "measure": "Smart Thermostat",
+   "unit": "Each",
+   "nte": 251,
+   "eligible": false
+  },
+  "smoke alarm": {
+   "msrId": "WHP104",
+   "measure": "Smoke Alarm",
+   "unit": "Each",
+   "nte": 54.4,
+   "eligible": false
+  },
+  "switch outlet gaskets covers": {
+   "msrId": "WHP134",
+   "measure": "Switch/Outlet Gaskets & Covers",
+   "unit": "Per Home",
+   "nte": 26.2,
+   "eligible": false
+  },
+  "thermostatic shower valve": {
+   "msrId": "WHP135",
+   "measure": "Thermostatic Shower Valve",
+   "unit": "Each",
+   "nte": 58,
+   "eligible": false
+  },
+  "thermostatic tub spout diverter": {
+   "msrId": "WHP136",
+   "measure": "Thermostatic Tub Spout/Diverter",
+   "unit": "Each",
+   "nte": 164,
+   "eligible": false
+  },
+  "tier 2 smart power strips": {
+   "msrId": "WHP099",
+   "measure": "Tier 2 Smart Power Strips",
+   "unit": "Each",
+   "nte": 107.8,
+   "eligible": false
+  },
+  "vacancy sensors": {
+   "msrId": "WHP100",
+   "measure": "Vacancy Sensors",
+   "unit": "Each",
+   "nte": 77,
+   "eligible": false
+  },
+  "vent dormer": {
+   "msrId": "WHP224",
+   "measure": "Vent- Dormer",
+   "unit": "Each",
+   "nte": 91,
+   "eligible": false
+  },
+  "vent eave": {
+   "msrId": "WHP225",
+   "measure": "Vent- Eave",
+   "unit": "Each",
+   "nte": 29.8,
+   "eligible": false
+  },
+  "vent gable mushroom": {
+   "msrId": "WHP226",
+   "measure": "Vent- Gable/Mushroom",
+   "unit": "Each",
+   "nte": 103,
+   "eligible": false
+  },
+  "vent screen": {
+   "msrId": "WHP227",
+   "measure": "Vent- Screen",
+   "unit": "Each",
+   "nte": 18.8,
+   "eligible": false
+  },
+  "wall insulation add r 13": {
+   "msrId": "WHP114",
+   "measure": "Wall Insulation, Add R-13",
+   "unit": "Per Square Foot",
+   "nte": 4.45,
+   "eligible": false
+  },
+  "wall repair utility penetration": {
+   "msrId": "WHP228",
+   "measure": "Wall Repair – Utility Penetration",
+   "unit": "Per Home",
+   "nte": 15.4,
+   "eligible": false
+  },
+  "wall repair plaster": {
+   "msrId": "WHP229",
+   "measure": "Wall Repair- Plaster",
+   "unit": "Per Home",
+   "nte": 31.4,
+   "eligible": false
+  },
+  "wall repair stucco": {
+   "msrId": "WHP230",
+   "measure": "Wall Repair- Stucco",
+   "unit": "Per Home",
+   "nte": 35,
+   "eligible": false
+  },
+  "water heater build new platform": {
+   "msrId": "WHP231",
+   "measure": "Water Heater - Build new platform",
+   "unit": "Each",
+   "nte": 314,
+   "eligible": false
+  },
+  "water heater parts 3 vent pipe 8 or less dw": {
+   "msrId": "WHP232",
+   "measure": "Water Heater - Parts - 3\" Vent Pipe 8' or less DW",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "water heater parts 3 vent pipe 8 or less sw": {
+   "msrId": "WHP233",
+   "measure": "Water Heater - Parts - 3\" Vent Pipe 8' or less SW",
+   "unit": "Per Linear Foot",
+   "nte": null,
+   "eligible": false
+  },
+  "water heater parts 3 elbow dw": {
+   "msrId": "WHP234",
+   "measure": "Water Heater - Parts - 3” Elbow-DW",
+   "unit": "Each",
+   "nte": 42,
+   "eligible": false
+  },
+  "water heater parts 3 elbow sw": {
+   "msrId": "WHP235",
+   "measure": "Water Heater - Parts - 3” Elbow-SW",
+   "unit": "Each",
+   "nte": 20.6,
+   "eligible": false
+  },
+  "water heater parts downdraft diverter": {
+   "msrId": "WHP236",
+   "measure": "Water Heater - Parts - Downdraft Diverter",
+   "unit": "Each",
+   "nte": 26.9,
+   "eligible": false
+  },
+  "water heater parts drain pan in conjunction with water heater replacement when required.": {
+   "msrId": "WHP237",
+   "measure": "Water Heater – Parts - Drain Pan: In conjunction with water heater replacement, when required.",
+   "unit": "Each",
+   "nte": 65,
+   "eligible": false
+  },
+  "water heater parts enclosure": {
+   "msrId": "WHP238",
+   "measure": "Water Heater - Parts – Enclosure",
+   "unit": "Per Appliance",
+   "nte": 272,
+   "eligible": false
+  },
+  "water heater parts expansion tank": {
+   "msrId": "WHP239",
+   "measure": "Water Heater - Parts - Expansion Tank",
+   "unit": "Per Appliance",
+   "nte": 140,
+   "eligible": false
+  },
+  "water heater parts pad": {
+   "msrId": "WHP240",
+   "measure": "Water Heater - Parts - Pad",
+   "unit": "Per Appliance",
+   "nte": 93,
+   "eligible": false
+  },
+  "water heater parts t p valve": {
+   "msrId": "WHP241",
+   "measure": "Water Heater - Parts - T/P Valve",
+   "unit": "Each",
+   "nte": 46,
+   "eligible": false
+  },
+  "water heater parts thermostat": {
+   "msrId": "WHP242",
+   "measure": "Water Heater - Parts - Thermostat",
+   "unit": "Each",
+   "nte": 340,
+   "eligible": false
+  },
+  "water heater parts watts 210 in conjunction with water heater replacement when required.": {
+   "msrId": "WHP243",
+   "measure": "Water Heater - Parts - Watts 210: In conjunction with water heater replacement, when required.",
+   "unit": "Per Appliance",
+   "nte": 512,
+   "eligible": false
+  },
+  "water heater blanket": {
+   "msrId": "WHP137",
+   "measure": "Water Heater Blanket",
+   "unit": "Each",
+   "nte": 95,
+   "eligible": false
+  },
+  "water heater drain cap": {
+   "msrId": "WHP138",
+   "measure": "Water Heater Drain Cap",
+   "unit": "Each",
+   "nte": 13.1,
+   "eligible": false
+  },
+  "water heater pipe insulation": {
+   "msrId": "WHP139",
+   "measure": "Water Heater Pipe Insulation",
+   "unit": "Each",
+   "nte": 30.5,
+   "eligible": false
+  },
+  "water pressure install pressure regulator": {
+   "msrId": "WHP244",
+   "measure": "Water Pressure - Install pressure regulator",
+   "unit": "Per Home",
+   "nte": 314,
+   "eligible": false
+  },
+  "weather stripping": {
+   "msrId": "WHP140",
+   "measure": "Weather-stripping",
+   "unit": "Per Linear Foot",
+   "nte": 6,
+   "eligible": false
+  },
+  "wh faucet aerators repair or replace leaky faucet": {
+   "msrId": "WHP245",
+   "measure": "WH - Faucet Aerators - Repair or replace leaky faucet",
+   "unit": "Each",
+   "nte": 105,
+   "eligible": false
+  },
+  "wh low flow showerhead repair or replace leaky shower": {
+   "msrId": "WHP246",
+   "measure": "WH - Low-Flow Showerhead - Repair or replace leaky shower",
+   "unit": "Each",
+   "nte": 314,
+   "eligible": false
+  },
+  "wh solar water heating roof repair": {
+   "msrId": "WHP247",
+   "measure": "WH Solar Water Heating - Roof repair",
+   "unit": "Per Home",
+   "nte": 5000,
+   "eligible": false
+  },
+  "window assembly": {
+   "msrId": "WHP248",
+   "measure": "Window Assembly",
+   "unit": "Each",
+   "nte": null,
+   "eligible": false
+  }
+ }
+}

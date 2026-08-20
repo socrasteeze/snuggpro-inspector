@@ -1,0 +1,218 @@
+{
+  "byCode": {
+    "DS0001": {
+      "row": "Duct Sealing - 60 Minutes"
+    },
+    "DS0002": {
+      "row": "Duct Sealing - 90 Minutes"
+    },
+    "DS0003": {
+      "row": "Duct Sealing - 120 Minutes"
+    },
+    "AS0001": {
+      "row": "Caulking"
+    },
+    "AS0002": {
+      "row": "Cover Plate Gaskets"
+    },
+    "AS0006": {
+      "row": "Weather-stripping"
+    },
+    "DoorSealing": {
+      "row": "Weather-stripping",
+      "estimated": true
+    },
+    "WHP142": {
+      "row": "Attic Cover Replacement"
+    },
+    "DHWPI01": {
+      "stem": "DWHPI01"
+    },
+    "DHWTI01": {
+      "stem": "DWHTI01"
+    },
+    "C0-PKG-AC-FAU-2T-HEAT": {
+      "pairsWith": "SWHC049-PKG-AC-FAU-15.2-S2-2T-COOL"
+    },
+    "C0-PKG-AC-FAU-2.5T-HEAT": {
+      "pairsWith": "SWHC049-PKG-AC-FAU-15.2-S2-2.5T-COOL"
+    },
+    "C0-PKG-AC-FAU-3T-HEAT": {
+      "pairsWith": "SWHC049-PKG-AC-FAU-15.2-S2-3T-COOL"
+    },
+    "C0-PKG-AC-FAU-3.5T-HEAT": {
+      "pairsWith": "SWHC049-PKG-AC-FAU-15.2-S2-3.5T-COOL"
+    },
+    "C0-PKG-AC-FAU-4T-HEAT": {
+      "pairsWith": "SWHC049-PKG-AC-FAU-15.2-S2-4T-COOL"
+    },
+    "SWHC049-03-SHP-15.2-S2-4T-HEAT": {
+      "pairsWith": "SWHC049-SHP-15.2-S2-4T-COOL"
+    },
+    "SWAP001-05-Ref-15-17": {
+      "stem": "SWAP001-REF-15-19",
+      "estimated": true
+    },
+    "SWAP001-05-Ref-17-20": {
+      "stem": "SWAP001-REF-15-19",
+      "estimated": true
+    },
+    "SWAP001-05-CF-16-19": {
+      "stem": "SWAP001-CF-16",
+      "estimated": true
+    },
+    "SWAP001-05-CF-19": {
+      "stem": "SWAP001-CF-16",
+      "estimated": true
+    },
+    "SWAP001-05-UF-19": {
+      "stem": "SWAP001-UF-16",
+      "estimated": true
+    },
+    "SWAP001-05-UF-10-13": {
+      "stem": "SWAP001-UF-13",
+      "estimated": true
+    }
+  },
+  "componentSplits": {
+    "SWWH003-T-G": {
+      "componentStem": "SWWH002-H-G",
+      "componentRow": "Low-Flow Showerhead - Handheld"
+    },
+    "SWWH003-T-E": {
+      "componentStem": "SWWH002-H-E",
+      "componentRow": "Low-Flow Showerhead - Handheld"
+    }
+  },
+  "byName": [
+    {
+      "match": "duct\\s*test|duct\\s*testing",
+      "row": "Duct Test - Title 24 or to perform duct sealing"
+    },
+    {
+      "match": "(building\\s*(department\\s*)?)?permit",
+      "row": "Permits"
+    },
+    {
+      "match": "out?r?e?ach.*(enroll|educat)|enrollment.*educat",
+      "row": "ESA WH Outreach & Assessment"
+    },
+    {
+      "match": "comprehensive home health",
+      "row": "Comprehensive Home Health and Safety Check-up"
+    },
+    {
+      "match": "furnace clean",
+      "row": "Furnace Clean and Tune"
+    },
+    {
+      "match": "co\\s*[/&-]\\s*smoke alarm|smoke\\s*[/&]\\s*co",
+      "row": "CO/Smoke Alarm Combo"
+    },
+    {
+      "match": "smoke alarm",
+      "row": "Smoke Alarm"
+    },
+    {
+      "match": "duct\\s*seal.*120|120\\s*min",
+      "row": "Duct Sealing - 120 Minutes"
+    },
+    {
+      "match": "duct\\s*seal.*90|90\\s*min",
+      "row": "Duct Sealing - 90 Minutes"
+    },
+    {
+      "match": "duct\\s*seal.*60|60\\s*min",
+      "row": "Duct Sealing - 60 Minutes"
+    },
+    {
+      "match": "weather.?strip|door\\s*(sweep|shoe)|door\\s*sealing",
+      "row": "Weather-stripping"
+    },
+    {
+      "match": "caulk",
+      "row": "Caulking"
+    },
+    {
+      "match": "(cover.?plate|switch\\s*[/&-]?\\s*outlet).*(gasket|cover)|gasket.*cover|utility gasket",
+      "row": "Cover Plate Gaskets"
+    },
+    {
+      "match": "attic\\s*(access\\s*)?cover|attic access new",
+      "row": "Attic Cover Replacement"
+    },
+    {
+      "match": "kitchen exhaust damper",
+      "row": "Kitchen Exhaust Dampers"
+    },
+    {
+      "match": "room ac.*cover|evaporative cooler cover",
+      "row": "Room AC/Evaporative Cooler Cover"
+    },
+    {
+      "match": "smart\\s*thermostat|ecobee|nest thermostat",
+      "row": "Smart Thermostat"
+    },
+    {
+      "match": "home energy monitor|copper home|energy monitor",
+      "row": "Home Energy Monitor"
+    },
+    {
+      "match": "security light",
+      "row": "Exterior LED Security Light (photocell and motion sensor)"
+    },
+    {
+      "match": "water heater pipe insulation",
+      "row": "Water Heater Pipe Insulation"
+    },
+    {
+      "match": "water heater (tank insulation|blanket)",
+      "row": "Water Heater Blanket"
+    },
+    {
+      "match": "water heater.*repair.*leak",
+      "row": "Water Heater - Repair water leak - NTE $300"
+    },
+    {
+      "match": "dishwasher",
+      "row": "Energy Star Qualified Dishwashers"
+    },
+    {
+      "match": "hvac tune",
+      "row": "HVAC Tune-up"
+    },
+    {
+      "match": "duct repair",
+      "row": "Duct Repair"
+    },
+    {
+      "match": "minor home.*repair|envelop(e)?\\s*repair",
+      "row": "Minor Home / Envelop Repairs - NTE $600"
+    },
+    {
+      "match": "blower\\s*door",
+      "row": null,
+      "group": "Testing & Audit"
+    },
+    {
+      "match": "energy audit",
+      "row": null,
+      "group": "Testing & Audit"
+    },
+    {
+      "match": "natural gas appliance|^ngat$",
+      "row": null,
+      "group": "Testing & Audit"
+    },
+    {
+      "match": "promotional marketing",
+      "row": null,
+      "group": "Outreach & Marketing"
+    },
+    {
+      "match": "mitigation|furnace part|remove contaminated|relocate condensing|add circuit|dryer vent|door gasket|install .*oven|build new platform|pressure regulator|roof repair|repair.?replace (faucet|shower|window)|panel or wiring|grounds outlet",
+      "row": null,
+      "group": "Mitigation"
+    }
+  ]
+}

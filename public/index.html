@@ -10,9 +10,14 @@
   a { color: #1c6ef2; }
 
   /* Layout */
-  .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+  /* The reporting table wants every pixel, so the nav collapses out of the way. */
+  .shell.nav-collapsed { grid-template-columns: 0 1fr; }
+  .shell.nav-collapsed .sidebar { overflow: hidden; border-right: none; }
   .sidebar { background: #1a1a1a; color: #d4d4d4; padding: 0; overflow-y: auto; position: sticky; top: 0; height: 100vh; }
-  .main { padding: 24px; overflow-y: auto; }
+  .main { padding: 24px; overflow-y: auto; min-width: 0; }
+  .nav-toggle { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 5px 9px; font-size: 13px; line-height: 1; cursor: pointer; color: #666; }
+  .nav-toggle:hover { background: #f5f5f5; color: #1c1c1c; }
 
   /* Sidebar */
   .sidebar-header { padding: 16px; border-bottom: 1px solid #2e2e2e; }
@@ -72,6 +77,12 @@
   /* Measures table */
   .measures-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #f0f0f0; background: #fafafa; flex-wrap: wrap; }
   .measures-toolbar .spacer { flex: 1; }
+  /* A flex:1 spacer on a wrapping row claims the rest of the line and pushes
+     everything after it onto the next one. This toolbar carries seven items, so it
+     does not wrap -- the job summary truncates instead. */
+  .t2b-toolbar { flex-wrap: nowrap; }
+  .measures-toolbar .summary { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .measures-toolbar .tool-btn, .measures-toolbar .csv-btn { flex: 0 0 auto; white-space: nowrap; }
   .measures-toolbar .summary { font-size: 12px; color: #666; }
   .csv-btn { background: #1a7a3a; color: #fff; border: none; border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
   .csv-btn:hover { background: #156430; }
@@ -112,11 +123,63 @@
   .csum-basis.basis-deemed { background: #e8f0fe; color: #1558c0; }
   .csum-basis.basis-warn { background: #fdecec; color: #b91c1c; }
   .csum-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-  .csum-card { flex: 1; min-width: 140px; background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 10px 14px; }
+  /* Fixed width, not flex:1 -- three cards stretching to fill a row that six cards
+     share made the panel jump every time the job set changed path mix. */
+  .csum-card { flex: 0 0 auto; width: 190px; background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 10px 14px; }
   .csum-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
   .csum-val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .csum-unit { font-size: 12px; font-weight: 400; color: #999; margin-left: 4px; }
   .csum-breakdown { font-size: 11px; color: #888; margin-top: 8px; }
+
+  /* Table 2B — two program blocks side by side, tinted so a row reads across cleanly */
+  table.measures.t2b th { text-align: center; }
+  table.measures.t2b th:first-child, table.measures.t2b th:nth-child(2) { text-align: left; }
+
+  /* The Plus block sits far enough right that the measure name scrolls away, so the
+     first two columns pin. Widths are fixed because the second column's sticky offset
+     has to be a constant — it cannot be "whatever the first column turned out to be". */
+  table.measures.t2b .stick-1, table.measures.t2b .stick-2 { position: sticky; z-index: 2; }
+  table.measures.t2b .stick-1 { left: 0; width: 320px; min-width: 320px; max-width: 320px; white-space: normal; }
+  table.measures.t2b .stick-2 { left: 320px; width: 96px; min-width: 96px; max-width: 96px; }
+  table.measures.t2b .stick-2 { box-shadow: 1px 0 0 #e5e5e5; }
+  table.measures.t2b tbody .stick-1, table.measures.t2b tbody .stick-2 { background: #fff; }
+  table.measures.t2b tbody tr:hover .stick-1, table.measures.t2b tbody tr:hover .stick-2 { background: #f8fbff; }
+  table.measures.t2b tr.t2b-cat .stick-1, table.measures.t2b tr.t2b-cat .stick-2 { background: #eaeae8; }
+  table.measures.t2b tr.t2b-total .stick-1, table.measures.t2b tr.t2b-total .stick-2 { background: #fafafa; }
+  /* Two header rows, each pinned at its own offset — a thead cannot stick as a unit. */
+  table.measures.t2b thead th { position: sticky; z-index: 3; }
+  table.measures.t2b thead tr:nth-child(1) th { top: 0; }
+  table.measures.t2b thead tr:nth-child(2) th { top: var(--t2b-head-h, 38px); }
+  table.measures.t2b thead .stick-1, table.measures.t2b thead .stick-2 { z-index: 4; background: #f5f5f4; }
+  table.measures.t2b .blk-head { font-size: 11px; padding-top: 5px; padding-bottom: 5px; }
+  table.measures.t2b .blk-head small { display: block; font-weight: 400; color: #777; font-size: 10px; }
+  /* Twelve numeric columns have to fit beside the two pinned ones, so this table runs
+     tighter than the others and lets the long column labels wrap instead of forcing
+     every column to the width of "Quantity Installed". */
+  table.measures.t2b th, table.measures.t2b td { padding: 3px 7px; }
+  table.measures.t2b tbody td { font-size: 11px; }
+  table.measures.t2b thead tr:nth-child(2) th,
+  table.measures.t2b thead tr:only-child th { white-space: normal; line-height: 1.2; max-width: 76px; font-size: 10px; }
+  table.measures.t2b thead tr:only-child .stick-1,
+  table.measures.t2b thead tr:only-child .stick-2 { max-width: none; font-size: 11px; }
+  table.measures.t2b .stick-1 { padding-right: 10px; }
+  td.t2b-path { font-weight: 600; font-size: 11px; }
+  td.t2b-path.path-plus { color: #1558c0; }
+  td.t2b-path.path-deep { color: #4a6b1f; }
+  th.blk-plus { background: #eef3fb; }
+  th.blk-plus:hover { background: #dce8f7; }
+  th.blk-deep { background: #f0f4e8; }
+  th.blk-deep:hover { background: #e4ebda; }
+  tr.t2b-cat td { background: #f5f5f4; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+  tr.t2b-total td { background: #fafafa; font-weight: 600; border-top: 2px solid #e5e5e5; }
+  .t2b-estimated { font-size: 9px; font-weight: 700; background: #fdf3e0; color: #8a4b00; padding: 1px 4px; border-radius: 3px; margin-left: 5px; }
+  .t2b-bad { color: #b91c1c; font-weight: 600; }
+  .t2b-note { font-size: 11px; color: #888; padding: 8px 14px; }
+  .t2b-panel { border-top: 1px solid #f0f0f0; padding: 14px 0 0; }
+  .t2b-panel h3 { font-size: 12px; font-weight: 600; color: #444; padding: 0 14px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .t2b-panel h4 { font-size: 12px; font-weight: 600; color: #666; padding: 10px 14px 4px; }
+  .t2b-list { list-style: none; font-size: 12px; color: #555; padding: 0 14px 6px; }
+  .t2b-list li { padding: 3px 0; border-bottom: 1px solid #f6f6f6; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -139,6 +202,7 @@
     <div class="sidebar-section-label">Reporting</div>
     <button class="nav-item active" data-path="MEASURES" data-label="Measures Table"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Measures Table</button>
     <button class="nav-item" data-path="USAGE" data-label="Usage / Billing"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Usage / Billing</button>
+    <button class="nav-item" data-path="TABLE2B" data-label="Reporting"><span class="method" style="background:#1c6ef2;color:#fff">RPT</span>Reporting</button>
     <button class="nav-item" onclick="exportXlsx()" data-label="Export XLSX"><span class="method" style="background:#217346;color:#fff">XLS</span>Export XLSX</button>
   </div>
 
@@ -211,6 +275,7 @@
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
+    <button class="nav-toggle" id="navToggle" onclick="toggleNav()" title="Show or hide the sidebar">&#9776;</button>
     <label>Job ID(s) or name</label>
     <input type="text" id="jobId" value="" placeholder="e.g. 123456, Jane Doe" />
     <span class="job-hint">IDs: comma/space separated · names: comma separated</span>
@@ -225,6 +290,7 @@
       <button class="tool-btn active" id="btnFriendly" onclick="setView('friendly')">Fields</button>
       <button class="tool-btn" id="btnRaw" onclick="setView('raw')">Raw JSON</button>
       <button class="tool-btn" id="btnCopy" onclick="copyJson()">Copy</button>
+      <button class="csv-btn" id="btnExport2b" onclick="exportTable2BXlsx()" style="display:none">Export 2B XLSX</button>
     </div>
     <div id="friendly-view"></div>
     <div id="raw-view"><pre id="rawPre"></pre></div>
@@ -240,6 +306,21 @@ let currentView = 'friendly';
 // DEFAULT_PROGRAM in proxy.js / worker.js (which sign requests that arrive without
 // a ?program=). A mismatch signs against one program while the UI claims another.
 let selectedProgram = 'sce';
+
+// The sidebar collapses because the reporting table is wider than the window. The
+// choice is remembered -- reopening on every reload would undo it constantly.
+function toggleNav() {
+  const collapsed = document.querySelector('.shell').classList.toggle('nav-collapsed');
+  try { localStorage.setItem('navCollapsed', collapsed ? '1' : '0'); } catch (_) {}
+  // Column widths change with the viewport, so the pinned header offset is re-measured.
+  syncT2bHeaderOffset();
+}
+
+try {
+  if (localStorage.getItem('navCollapsed') === '1') {
+    document.querySelector('.shell').classList.add('nav-collapsed');
+  }
+} catch (_) {}
 
 function onProgramChange(val) {
   selectedProgram = val;
@@ -284,6 +365,9 @@ async function doFetch() {
   if (currentPath === 'USAGE') {
     return fetchUsageBilling(rawSearch);
   }
+  if (currentPath === 'TABLE2B') {
+    return fetchTable2B(rawSearch);
+  }
 
   let jobId = '';
   if (currentPath.includes('{jobId}')) {
@@ -311,6 +395,7 @@ async function doFetch() {
   setBadge('loading', 'Fetching…');
   document.getElementById('resultWrap').style.display = 'block';
   document.getElementById('resultTitle').textContent = label;
+  showExport2b(false);
   document.getElementById('friendly-view').innerHTML = '';
   document.getElementById('rawPre').textContent = '';
   document.getElementById('endpointDisplay').textContent = path;
@@ -439,8 +524,13 @@ function classifyHvac(data) {
   return '';
 }
 
+// Dwelling type lives on basedata, not on a house object — /all-data has no `house`
+// key at all. Reading the wrong one returned '' for every job, which left the Measures
+// Table badge and the export's Home Type column blank and reported zero mobile homes.
+// Values seen: "Single Family Detached", "Single Family Attached", "Mobile Home",
+// "Single Wide Mobile Home", "Double Wide Mobile Home".
 function typeOfHomeLabel(data) {
-  const v = data?.house?.typeOfHome ?? data?.typeOfHome;
+  const v = data?.basedata?.typeOfHome ?? data?.house?.typeOfHome ?? data?.typeOfHome;
   return (v == null || v === '') ? '' : String(v);
 }
 
@@ -535,6 +625,11 @@ function flattenMeasures(data) {
     const recSavings  = num(rec.savings);
     const base = {
       measure: rec.title,
+      // Identity, not the title. Two separate recommendations can share a title, and
+      // the Table 2B fold has to keep those apart while still collapsing the several
+      // cost lines of a single recommendation. Falls back to the title where the API
+      // sends no uuid, which is the best available key.
+      recId: rec.uuid || rec.title,
       savedKwh: num(rec.savedKwh),
       savedTherms: num(rec.savedTherms),
       savedMmbtu: num(rec.savedMbtu),
@@ -767,6 +862,7 @@ function showJobSearchErrors(errors) {
   setBadge('err', 'No matching jobs');
   document.getElementById('resultWrap').style.display = 'block';
   document.getElementById('resultTitle').textContent = 'Job search';
+  showExport2b(false);
   document.getElementById('rawPre').textContent = '';
   document.getElementById('friendly-view').innerHTML = `<div class="err-block">${messages.map(esc).join('<br/>')}</div>`;
 }
@@ -842,6 +938,7 @@ async function fetchMeasures(rawIds) {
   setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
   document.getElementById('resultWrap').style.display = 'block';
   document.getElementById('resultTitle').textContent = 'Measures Table';
+  showExport2b(false);
   document.getElementById('friendly-view').innerHTML = `<div style="padding:20px;color:#888">Loading ${multi ? jobIds.join(', ') : jobIds[0]}…</div>`;
   document.getElementById('rawPre').textContent = '';
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
@@ -1201,6 +1298,7 @@ async function fetchUsageBilling(rawIds) {
   setBadge('loading', multi ? `Fetching ${jobIds.length} jobs…` : 'Fetching…');
   document.getElementById('resultWrap').style.display = 'block';
   document.getElementById('resultTitle').textContent = 'Usage / Billing';
+  showExport2b(false);
   document.getElementById('friendly-view').innerHTML = `<div style="padding:20px;color:#888">Loading ${multi ? jobIds.join(', ') : jobIds[0]}…</div>`;
   document.getElementById('rawPre').textContent = '';
   document.getElementById('endpointDisplay').textContent = multi ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
@@ -1327,6 +1425,1030 @@ function exportUsageCsv() {
 }
 // ---------- END USAGE / BILLING ----------
 
+// ---------- TABLE 2B (ESA monthly report) ----------
+// SnuggPro does not pick deemed savings by climate zone: its per-unit values are the
+// CZ10 row of the consolidated measure list for every home, whatever the zone. This
+// view re-reads each installed measure against the home's actual zone, re-runs the
+// DeemedSavingsCalculator percentage for the jobs SnuggPro puts in the Plus band, and
+// rolls the result into the two blocks of ESA Table 2B.
+//
+// Reference data is generated by tools/build-reference.js from the ESA source
+// workbooks. tools/verify-reference.js checks the joins against a real export.
+
+// Energy content, matching DeemedSavingsCalculator-WH_Template cell for cell. Do NOT
+// round these to 3412 / 100000 — the sheet's own percentages are computed with these
+// constants and this tool is validated against them.
+const BTU_PER_KWH = 3412.14;
+const BTU_PER_THERM = 100000.013;
+
+// Which zones the measure list publishes measures for lives on the reference object
+// (reference.supportedZones), not in a global beside it. It is read from the generated
+// data rather than hardcoded, so revising the source workbook cannot leave a stale list
+// marking a real zone unsupported — and keeping it on the object means anything that
+// swaps the reference in, including the verify harnesses, cannot half-update it.
+// A job outside the set is an exception to look at, never a quiet fallback to some
+// other zone's savings.
+
+// Table 2B reports "Year-To-Date Completed & Expensed Installation", so the default
+// excludes jobs still in audit or bid.
+const COMPLETED_STAGE_IDS = new Set([6, 7, 9]);
+
+let reference = null;
+let referencePromise = null;
+let t2bResult = null;
+let t2bHideEmpty = true;
+let t2bIncludeNonMeasure = false;
+let t2bCompletedOnly = true;
+// 'cpuc' reproduces the filing workbook's two side-by-side blocks; 'merged' puts one
+// set of value columns beside a Path column.
+let t2bLayout = 'cpuc';
+
+// Fetched once per page load. On failure the promise is dropped so the next attempt
+// actually retries instead of replaying the rejection forever.
+async function loadReference() {
+  if (reference) return reference;
+  if (!referencePromise) {
+    referencePromise = (async () => {
+      const names = ['measure-list', 'table2b-rows', 'measure-crosswalk', 'zip-climate-zone'];
+      const [measures, rows, crosswalk, zips] = await Promise.all(names.map(async n => {
+        const res = await fetch(`/reference/${n}.json`);
+        if (!res.ok) throw new Error(`reference/${n}.json — ${res.status} ${res.statusText}`);
+        return res.json();
+      }));
+      reference = {
+        byStem: measures.byStem,
+        rows: rows.rows,
+        byCode: crosswalk.byCode,
+        componentSplits: crosswalk.componentSplits || {},
+        // Compiled once: these run against every line item of every job.
+        nameRules: crosswalk.byName.map(r => ({ re: new RegExp(r.match, 'i'), row: r.row, group: r.group })),
+        zones: zips.zones,
+        supportedZones: new Set(measures.supportedZones || [])
+      };
+      if (!reference.supportedZones.size) {
+        throw new Error('reference/measure-list.json lists no climate zones - regenerate it');
+      }
+      t2bShortLabels = null;
+      return reference;
+    })();
+    referencePromise.catch(() => { referencePromise = null; });
+  }
+  return referencePromise;
+}
+
+// normName() and codeStem() MUST stay identical to the versions in
+// tools/build-reference.js. The JSON is keyed by their output, so any drift here
+// silently stops the join from matching rather than raising anything.
+const MOJIBAKE = new RegExp(String.fromCharCode(0xFFFD), 'g');
+
+function normName(t) {
+  return String(t == null ? '' : t).trim()
+    .replace(MOJIBAKE, '')
+    .replace(/&amp;/g, '&')
+    .replace(/(\d)\s*1\/2/g, '$1.5')   // fold the fraction before stripping symbols
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function codeStem(code) {
+  const up = String(code == null ? '' : code).trim().toUpperCase().replace(/\s+/g, '');
+  return up.replace(/-CZ\d\d$/, '').replace(/^([A-Z0-9]+?)-\d\d-/, '$1-');
+}
+
+// Variant names carry their own zone ("Whole House Fan, CZ16") where the SnuggPro line
+// item does not, so drop that suffix before comparing the two.
+function variantNameKey(n) {
+  return normName(String(n == null ? '' : n).replace(/,\s*CZ\d\d\s*$/i, ''));
+}
+
+function stageIdOf(data) {
+  const id = data?.job?.stageId ?? data?.stageId;
+  return id === null || id === undefined || id === '' ? null : Number(id);
+}
+
+function climateZoneFor(data) {
+  const zip = String(data?.job?.zip ?? data?.zip ?? '').trim().replace(/\D/g, '').slice(0, 5);
+  if (!zip) return { zip: '', cz: null, key: '', supported: false, reason: 'job has no ZIP code' };
+  const cz = reference.zones[zip.padStart(5, '0')];
+  if (cz == null) return { zip, cz: null, key: '', supported: false, reason: `ZIP ${zip} is not in the climate-zone table` };
+  const key = 'CZ' + String(cz).padStart(2, '0');
+  const supported = reference.supportedZones.has(cz);
+  return { zip, cz, key, supported, reason: supported ? '' : `climate zone ${cz} has no SCE/SCG measures` };
+}
+
+// Find the catalog row for this measure in this home's climate zone.
+//
+// Returns { variant, reason }; a null variant with a reason is a deliberate refusal,
+// not a zero. Within one zone the same measure can differ enormously by heating and
+// cooling system — attic insulation R-30 at CZ10 is 0.01 kWh for rNCGF and 0.59 for
+// rNCEH, 59 times apart — so when every row in the zone names a system and none is
+// this home's, picking one would be a fabrication. The line item goes to the exception
+// panel instead. A blank HVAC TYPE in the list means the measure does not vary by
+// system, and those rows are the correct fallback.
+function lookupVariant(entry, czKey, hvac, name) {
+  if (!entry || !entry.variants || !entry.variants.length) {
+    return { variant: null, reason: 'no catalog entry' };
+  }
+  const wantHvac = String(hvac || '').toLowerCase();
+  const wantName = variantNameKey(name);
+  const inZone = v => v.cz === czKey;
+  const zoneless = v => !v.cz || v.cz === 'ALL';
+  const sameHvac = v => v.hvac && v.hvac.toLowerCase() === wantHvac;
+  // Blank means the measure does not vary by system. The literal "HVAC" means the same
+  // thing for the tune-up measures (coil cleaning, refrigerant charge) — it names the
+  // presence of a system, not a type of one. Reading it as a specific type refused ~100
+  // line items across the July job set and dropped their savings.
+  const systemAgnostic = v => !v.hvac || v.hvac.toUpperCase() === 'HVAC';
+  const sameName = v => variantNameKey(v.name) === wantName;
+
+  const pools = [entry.variants.filter(inZone), entry.variants.filter(zoneless)];
+  for (const pool of pools) {
+    if (!pool.length) continue;
+    const exact = pool.filter(sameHvac);
+    const agnostic = pool.filter(systemAgnostic);
+    const candidates = exact.length ? exact : agnostic;
+    if (!candidates.length) {
+      const have = [...new Set(pool.map(v => v.hvac))].join(', ');
+      return { variant: null,
+        reason: `${czKey || 'zone-independent'} rows are written for ${have}, and this home is ${hvac || 'an unknown system'}` };
+    }
+    // Several rows can share a code and zone (one lamp / two lamps / three lamps);
+    // the line-item name is what tells them apart.
+    return { variant: candidates.find(sameName) || candidates[0], reason: '' };
+  }
+  return { variant: null, reason: czKey ? `no ${czKey} row in the catalog` : 'no zone-independent row in the catalog' };
+}
+
+// Where a line item lands in Table 2B. Order: curated code map, then the measure list,
+// then the free-text name rules for the line items that carry no code at all.
+function resolveRow2b(code, name, fallbackName) {
+  const raw = String(code || '').trim();
+  const mapped = reference.byCode[raw];
+  if (mapped) {
+    if (mapped.row) return { row: mapped.row, estimated: mapped.estimated, via: 'code' };
+    const target = mapped.stem || mapped.pairsWith;
+    const borrowed = target ? reference.byStem[codeStem(target)] : null;
+    if (borrowed && borrowed.row2b) {
+      return {
+        row: borrowed.row2b,
+        estimated: mapped.estimated || borrowed.estimated,
+        via: mapped.stem ? 'code/stem' : 'code/pair',
+        borrowsFrom: mapped.stem ? codeStem(target) : null,
+        // pairsWith means the partner half carries the savings for the whole system.
+        // Reading them here as well would count the system twice.
+        noSavings: !!mapped.pairsWith
+      };
+    }
+  }
+  const entry = reference.byStem[codeStem(raw)];
+  if (entry) {
+    if (entry.row2b) return { row: entry.row2b, estimated: entry.estimated, half: entry.half, via: 'measure-list' };
+    // A container measure: the savings sit here, the cost and the 2B row sit on the
+    // sibling line items of the same recommendation.
+    if (entry.defer) return { row: null, defer: true, via: 'measure-list' };
+    if (entry.group) return { row: null, group: entry.group, via: 'measure-list' };
+  }
+  const text = String(name || '').trim() || String(fallbackName || '');
+  for (const rule of reference.nameRules) {
+    if (rule.re.test(text)) return { row: rule.row, group: rule.group, via: 'name' };
+  }
+  return { row: null, via: 'unmapped' };
+}
+
+// Split systems arrive as two line items: one carrying the cooling savings, one the
+// heating savings, each carrying half the system cost. The heat half sometimes uses a
+// different code family (C0-PKG-AC-FAU-* against SWHC049-PKG-AC-FAU-*), so pair on
+// system type and tonnage rather than on the code.
+function systemHalf(code, name) {
+  const src = String(code || '').trim() || String(name || '');
+  const half = /\(?\b(COOL|HEAT)\b\)?/i.exec(src);
+  if (!half) return null;
+  const tons = /(\d+(?:\.\d+)?)\s*(?:T\b|Tons?\b)/i.exec(src);
+  if (!tons) return null;
+  const up = src.toUpperCase();
+  const family =
+    (up.includes('PKG-AC-FAU') || up.includes('PACKAGED AC')) ? 'PKG-AC-FAU'
+    : (up.includes('SAC-FAU') || up.includes('SPLIT AC AND GAS FAU')) ? 'SAC-FAU'
+    : (up.includes('SHP') || up.includes('SPLIT HEAT PUMP')) ? 'SHP'
+    : (up.includes('PHP') || up.includes('PACKAGED HEAT PUMP')) ? 'PHP'
+    : 'OTHER';
+  return { family, tons: tons[1], half: half[1].toUpperCase() };
+}
+
+// Twelve rolling months per fuel, converted to BTU — the denominator of the
+// DeemedSavingsCalculator percentage. flattenUsage() returns periods in series order,
+// so the last twelve are the most recent twelve.
+function usageTotals(data) {
+  const rows = flattenUsage(data);
+  const take = (fuel, units) => rows.filter(r => r.fuel === fuel && r.units === units).slice(-12);
+  const elec = take('Electric', 'kWh');
+  const gas = take('Gas', 'Therms');
+  const kwh = elec.reduce((a, r) => a + (r.usage || 0), 0);
+  const therms = gas.reduce((a, r) => a + (r.usage || 0), 0);
+  return {
+    kwh, therms,
+    btu: kwh * BTU_PER_KWH + therms * BTU_PER_THERM,
+    elecMonths: elec.length, gasMonths: gas.length
+  };
+}
+
+// Deemed BTU saved over annual BTU used, as a percentage — Sheet1!C23 of the calculator.
+function recalcSavingsPct(items, usage) {
+  if (!usage.btu) return null;
+  let saved = 0;
+  for (const i of items) saved += (i.czKwh || 0) * BTU_PER_KWH + (i.czTh || 0) * BTU_PER_THERM;
+  return (saved / usage.btu) * 100;
+}
+
+function savingsBand(pct) {
+  if (pct == null) return 'review';
+  if (pct > 15) return 'deep';
+  return pct >= 5 ? 'plus' : 'review';
+}
+
+// SnuggPro's percentage decides which block a job is reported in, always. The
+// recalculated figure corrects the Plus savings VALUES but does not move the job.
+//
+// They are not the same quantity: SnuggPro's combinedTotalEnergySavings is modeled plus
+// deemed, while the DeemedSavingsCalculator measures deemed alone. On the July 2026 set
+// a job SnuggPro puts at 13.9% is 3.3% deemed-only, and banding on the deemed figure
+// demoted 11 of 34 Plus households out of the report. Every job in the filed summary
+// sits in SnuggPro's own band, so that is what the block assignment follows.
+function resolvePath(snuggPct, recalcPct) {
+  const snugg = savingsBand(snuggPct);
+  if (snugg !== 'plus') return { path: snugg, basis: 'SnuggPro', disagrees: false, snugg, uncorrected: false };
+  if (recalcPct == null) {
+    return { path: 'plus', basis: 'SnuggPro (not corrected)', disagrees: false, snugg, uncorrected: true };
+  }
+  // Flagged, not acted on: worth a look when the two figures tell different stories,
+  // but the deemed-only percentage is a savings check rather than a band test.
+  return {
+    path: 'plus', basis: 'SnuggPro band, corrected savings',
+    disagrees: savingsBand(recalcPct) !== 'plus', snugg, uncorrected: false
+  };
+}
+
+const pickNum = (a, b) => (a != null ? a : b);
+
+// A recommendation's modeled savings are a line total that flattenMeasures() copies onto
+// every one of its cost lines — summing the rows counts one recommendation several times
+// (21% of modeled kWh on the 336-job sample). Count it once, then split it across those
+// lines in proportion to cost so it reaches the right 2B rows.
+function foldRecommendations(items) {
+  const groups = new Map();
+  items.forEach(i => {
+    if (i.source !== 'rec') return;
+    // Group on the recommendation's own identity. Grouping on the title merged two
+    // separate recommendations that happened to share one — and a home really can
+    // carry two of the same measure.
+    const key = i.recId || i.measure;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(i);
+  });
+  for (const rows of groups.values()) {
+    if (rows.length < 2) continue;
+    const totalCost = rows.reduce((a, r) => a + (r.lineCost || 0), 0);
+    ['savedKwh', 'savedTherms', 'savedMmbtu'].forEach(key => {
+      const vals = rows.map(r => r[key]).filter(v => v != null);
+      if (vals.length !== rows.length) return;
+      // Identical across the group means one line total repeated. Distinct values mean
+      // SnuggPro really did vary them per line, so those are left alone.
+      if (!vals.every(v => v === vals[0])) return;
+      rows.forEach(r => {
+        r[key] = totalCost > 0 ? vals[0] * ((r.lineCost || 0) / totalCost) : vals[0] / rows.length;
+        r.folded = true;
+      });
+    });
+  }
+  return items;
+}
+
+// Merge each complete COOL/HEAT pair into the single system Table 2B reports. Quantity
+// comes from one half (they always match), cost and savings from both. An orphan half
+// still reports its own numbers and is listed as an exception — it means either a half
+// nobody entered or a whole system billed on one line, and only the job can say which.
+function mergeSystemHalves(items) {
+  const out = [];
+  const pairs = new Map();
+  for (const i of items) {
+    if (!i.pair) { out.push(i); continue; }
+    const key = i.pair.family + '::' + i.pair.tons;
+    if (!pairs.has(key)) pairs.set(key, {});
+    pairs.get(key)[i.pair.half] = i;
+  }
+  const orphans = [];
+  for (const p of pairs.values()) {
+    if (!p.COOL || !p.HEAT) {
+      const side = p.COOL ? 'COOL' : 'HEAT';
+      out.push(p[side]);
+      orphans.push({ side, item: p[side] });
+      continue;
+    }
+    const add = key => pickNum(p.COOL[key], 0) + pickNum(p.HEAT[key], 0);
+    const anyOf = key => (p.COOL[key] != null || p.HEAT[key] != null) ? add(key) : null;
+    // Whichever half names a 2B row is the one that describes the system.
+    const base = p.COOL.dest && p.COOL.dest.row ? p.COOL : p.HEAT;
+    out.push({
+      ...base,
+      quantity: p.COOL.quantity,
+      lineCost: add('lineCost'),
+      savedKwh: anyOf('savedKwh'), savedTherms: anyOf('savedTherms'), savedMmbtu: anyOf('savedMmbtu'),
+      czKwh: anyOf('czKwh'), czKw: anyOf('czKw'), czTh: anyOf('czTh'),
+      deemedKwh: anyOf('deemedKwh'), deemedTherms: anyOf('deemedTherms'),
+      pairedFrom: [p.COOL.name, p.HEAT.name]
+    });
+  }
+  return { items: out, orphans };
+}
+
+// One job's line items, each annotated with where it belongs in Table 2B and what its
+// savings are once the home's real climate zone is applied.
+function buildJobItems(jobId, data, zone, hvac) {
+  return flattenMeasures(data).map(r => {
+    const dest = resolveRow2b(r.code, r.name, r.measure);
+    const entry = reference.byStem[codeStem(dest.borrowsFrom || r.code)];
+    // A line item with no catalog entry at all is ordinary — permits, audits and
+    // mitigation carry cost and no savings. Only a measure that HAS an entry but no
+    // usable row for this home is worth flagging.
+    const look = (dest.noSavings || !zone.supported || !entry)
+      ? { variant: null, reason: '' }
+      : lookupVariant(entry, zone.key, hvac, r.name);
+    const variant = look.variant;
+    const qty = r.quantity == null ? 1 : r.quantity;
+
+    // Where the measure list also publishes a standalone version of one half of this
+    // product, carry that half's per-unit values so the row split has a source.
+    const split = (reference.componentSplits || {})[codeStem(dest.borrowsFrom || r.code)];
+    let componentSplit = null;
+    if (split && variant) {
+      const comp = lookupVariant(reference.byStem[split.componentStem], zone.key, hvac, '').variant;
+      if (comp) componentSplit = { row: split.componentRow, kwh: comp.kwh, kw: comp.kw, th: comp.th };
+    }
+    return Object.assign({}, r, {
+      jobId,
+      dest,
+      variant,
+      variantMiss: look.reason,
+      // Deemed savings for the home's actual zone, per unit times quantity.
+      czKwh: variant && variant.kwh != null ? variant.kwh * qty : null,
+      czKw: variant && variant.kw != null ? variant.kw * qty : null,
+      czTh: variant && variant.th != null ? variant.th * qty : null,
+      componentSplit,
+      pair: systemHalf(r.code, r.name)
+    });
+  });
+}
+
+// One SnuggPro line item can be two Table 2B rows. "Thermostatic Shower Valve and
+// 1.25 GPM Showerhead" is sold and deemed as one product (SWWH003) but the report has
+// a row for each half, which is why the filed Deep block shows 403 valves and 407
+// showerheads — the same install counted on both.
+//
+// The split is taken from the catalog rather than invented: the standalone showerhead
+// measure (SWWH002) is itself in the measure list, so the showerhead row gets its
+// published value and the valve row gets what is left over. That is 12.3 of 14 kWh at
+// CZ10, and holds at 87.9% in every zone. Quantity appears on both rows, matching the
+// filed convention; cost follows the same share. Totals are unchanged either way.
+function splitContributions(item, totals, row) {
+  const c = item.componentSplit;
+  const q = totals.qty || 0;
+  if (!c || !q) return [{ row, ...totals }];
+
+  const compKwh = (c.kwh || 0) * q;
+  const compTherms = (c.th || 0) * q;
+  const compKw = totals.kw ? (c.kw || 0) * q : 0;
+
+  // Share the cost the way the energy splits, so neither row is arbitrary.
+  const btu = v => v.kwh * BTU_PER_KWH + v.therms * BTU_PER_THERM;
+  const whole = btu(totals);
+  const share = whole ? Math.min(1, Math.max(0, btu({ kwh: compKwh, therms: compTherms }) / whole)) : 0.5;
+
+  return [
+    { row: c.row, qty: q, kwh: compKwh, therms: compTherms, kw: compKw, cost: totals.cost * share },
+    { row, qty: q,
+      kwh: totals.kwh - compKwh, therms: totals.therms - compTherms, kw: totals.kw - compKw,
+      cost: totals.cost * (1 - share) }
+  ];
+}
+
+function newBlock() {
+  return { rows: new Map(), cost: 0, jobs: new Set(), singleFamily: new Set(), mobile: new Set() };
+}
+
+function blockRow(block, label) {
+  if (!block.rows.has(label)) {
+    block.rows.set(label, { qty: 0, kwh: 0, kw: 0, therms: 0, cost: 0, estimated: false, jobs: new Set() });
+  }
+  return block.rows.get(label);
+}
+
+function buildTable2B(jobs) {
+  const blocks = { plus: newBlock(), deep: newBlock(), review: newBlock() };
+  const comparison = [], exceptions = [], unmapped = new Map(), nonMeasure = new Map();
+  // Catalog misses are aggregated: one measure that has no row for a common HVAC type
+  // would otherwise produce a line per job and bury everything else.
+  const variantMisses = new Map();
+
+  for (const { jobId, data } of jobs) {
+    const zone = climateZoneFor(data);
+    const hvac = classifyHvac(data);
+    const usage = usageTotals(data);
+    let items = buildJobItems(jobId, data, zone, hvac);
+
+    const snuggPct = metaNum(data, 'combinedTotalEnergySavings');
+    const recalc = zone.supported ? recalcSavingsPct(items, usage) : null;
+    const decision = resolvePath(snuggPct, recalc);
+    const block = blocks[decision.path];
+
+    items = foldRecommendations(items);
+    const merged = mergeSystemHalves(items);
+    items = merged.items;
+
+    if (!zone.supported) exceptions.push({ jobId, kind: 'Climate zone', detail: zone.reason });
+    if (usage.elecMonths < 12 || usage.gasMonths < 12) {
+      exceptions.push({ jobId, kind: 'Billing history',
+        detail: `${usage.elecMonths} months electric, ${usage.gasMonths} months gas — the recalculated percentage needs 12 of each` });
+    }
+    if (decision.uncorrected) {
+      exceptions.push({ jobId, kind: 'Reported uncorrected',
+        detail: `SnuggPro's ${snuggPct == null ? 'figure' : snuggPct.toFixed(1) + '%'} is reported as-is — the climate-zone correction could not be computed, so this job still carries SnuggPro's CZ10 savings` });
+    }
+    if (decision.path === 'review') {
+      exceptions.push({ jobId, kind: 'Below 5%',
+        detail: `${snuggPct == null ? 'No savings percentage' : snuggPct.toFixed(1) + '%'} — outside both program paths, so this job is in neither block and its costs are not in either total` });
+    }
+    if (decision.disagrees) {
+      exceptions.push({ jobId, kind: 'Deemed savings below the band',
+        detail: `SnuggPro reports ${snuggPct == null ? 'no figure' : snuggPct.toFixed(1) + '%'} combined; deemed-only savings are ${recalc == null ? 'unavailable' : recalc.toFixed(1) + '%'} — still reported as Pilot Plus, but worth a look` });
+    }
+    merged.orphans.forEach(o => exceptions.push({ jobId, kind: 'Unpaired system half',
+      detail: `${o.side} only for ${o.item.pair.family} ${o.item.pair.tons} ton, ${fmtMoney(o.item.lineCost)} — either the other half is missing or the whole system is on this line` }));
+
+    let jobKwh = 0, jobTherms = 0, snuggKwh = 0, snuggTherms = 0;
+
+    for (const item of items) {
+      const cost = item.lineCost || 0;
+      // Deep reports modeled savings; Plus reports zone-corrected deemed. Either way
+      // SnuggPro's own deemed value is the last fallback rather than a zero: when the
+      // zone is unsupported or the catalog has no row for this home, reporting what
+      // SnuggPro reported is no worse than today, and the exception panel says so.
+      // Reporting zero would silently understate the measure instead.
+      // kW has no source in /all-data at all, so it only ever comes from the measure list.
+      const kwh = decision.path === 'deep'
+        ? pickNum(item.savedKwh, pickNum(item.czKwh, item.deemedKwh))
+        : pickNum(item.czKwh, pickNum(item.deemedKwh, item.savedKwh));
+      const therms = decision.path === 'deep'
+        ? pickNum(item.savedTherms, pickNum(item.czTh, item.deemedTherms))
+        : pickNum(item.czTh, pickNum(item.deemedTherms, item.savedTherms));
+
+      if (item.variantMiss) {
+        const key = (item.code || item.name) + ' :: ' + item.variantMiss;
+        const acc = variantMisses.get(key) ||
+          { code: item.code || item.name, reason: item.variantMiss, n: 0, jobs: new Set() };
+        acc.n++; acc.jobs.add(jobId);
+        variantMisses.set(key, acc);
+      }
+
+      jobKwh += kwh || 0;
+      jobTherms += therms || 0;
+      snuggKwh += pickNum(item.savedKwh, item.deemedKwh) || 0;
+      snuggTherms += pickNum(item.savedTherms, item.deemedTherms) || 0;
+
+      const dest = item.dest || {};
+      if (!dest.row) {
+        const bucket = dest.group || dest.defer ? nonMeasure : unmapped;
+        const key = (dest.group || item.code || item.name || item.measure || 'unknown');
+        const acc = bucket.get(key) || { label: item.name || item.measure, group: dest.group, n: 0, cost: 0, jobs: new Set() };
+        acc.n++; acc.cost += cost; acc.jobs.add(jobId);
+        bucket.set(key, acc);
+        // Excluded by default: these are Direct Implementation and mitigation spend, not
+        // 2B measure rows. Turning the toggle on files them under Outreach & Assessment
+        // so the block total reconciles with the SnuggPro project record.
+        if (t2bIncludeNonMeasure && dest.group) {
+          const r = blockRow(block, 'ESA WH Outreach & Assessment');
+          r.cost += cost; r.jobs.add(jobId);
+          block.cost += cost;
+        }
+        continue;
+      }
+
+      // kW exists only in the deemed catalog — SnuggPro carries kWh and therms and
+      // nothing else. So a Plus job, whose savings are all deemed, carries kW on every
+      // measure that has one; a Deep job carries it only on its direct installs, whose
+      // savings are deemed even there. A modeled line has no kW to report.
+      const reportedModeled = decision.path === 'deep' && (item.savedKwh != null || item.savedTherms != null);
+      const kw = reportedModeled ? 0 : (item.czKw || 0);
+
+      const qty = item.quantity == null ? 0 : item.quantity;
+      for (const part of splitContributions(item, { qty, kwh: kwh || 0, therms: therms || 0, kw, cost }, dest.row)) {
+        const row = blockRow(block, part.row);
+        row.qty += part.qty;
+        row.cost += part.cost;
+        row.kwh += part.kwh;
+        row.therms += part.therms;
+        row.kw += part.kw;
+        row.jobs.add(jobId);
+        if (dest.estimated) row.estimated = true;
+      }
+      block.cost += cost;
+    }
+
+    block.jobs.add(jobId);
+    const home = typeOfHomeLabel(data);
+    (/mobile|manufactured/i.test(home) ? block.mobile : block.singleFamily).add(jobId);
+
+    comparison.push({
+      jobId, zip: zone.zip, cz: zone.key || '—', supported: zone.supported, hvac,
+      stage: stageLabel(data), home,
+      snuggPct, recalcPct: recalc, path: decision.path, snuggPath: decision.snugg,
+      basis: decision.basis, disagrees: decision.disagrees,
+      kwh: jobKwh, therms: jobTherms,
+      deltaKwh: jobKwh - snuggKwh, deltaTherms: jobTherms - snuggTherms,
+      months: Math.min(usage.elecMonths, usage.gasMonths)
+    });
+  }
+
+  return {
+    blocks, comparison, exceptions,
+    unmapped: [...unmapped.values()],
+    nonMeasure: [...nonMeasure.values()],
+    variantMisses: [...variantMisses.values()].sort((a, b) => b.n - a.n)
+  };
+}
+
+function pathLabel(p) {
+  return p === 'deep' ? 'Pilot Deep' : p === 'plus' ? 'Pilot Plus' : 'Review';
+}
+
+function fmtMoney(v) {
+  const n = Number(v) || 0;
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// refresh:true for an explicit Fetch, matching the other views. The toggles pass false
+// so flipping a switch re-reads the cache instead of pulling every job again — on a
+// 300-job batch that is the difference between instant and a full round of requests.
+async function fetchTable2B(rawIds, { refresh = true } = {}) {
+  if (parseJobSearch(rawIds).length === 0) { alert('Enter at least one Job ID or name.'); return; }
+
+  document.getElementById('resultWrap').style.display = 'block';
+  document.getElementById('resultTitle').textContent = 'Reporting — ESA Table 2B';
+  showExport2b(true);
+  document.getElementById('rawPre').textContent = '';
+  setView('friendly');
+
+  setBadge('loading', 'Loading reference data…');
+  try {
+    await loadReference();
+  } catch (e) {
+    setBadge('err', 'Reference data missing');
+    document.getElementById('friendly-view').innerHTML =
+      `<div class="err-block">Could not load the ESA reference data: ${esc(e.message)}<br/>` +
+      `Run <code>node tools/build-reference.js</code> to generate <code>public/reference/</code>.</div>`;
+    return;
+  }
+
+  setBadge('loading', 'Resolving jobs…');
+  const resolved = await resolveJobIds(rawIds);
+  const jobIds = resolved.jobIds;
+  if (jobIds.length === 0) { showJobSearchErrors(resolved.errors); return; }
+
+  setBadge('loading', `Fetching ${jobIds.length} job${jobIds.length > 1 ? 's' : ''}…`);
+  document.getElementById('friendly-view').innerHTML =
+    `<div style="padding:20px;color:#888">Loading ${jobIds.length} job${jobIds.length > 1 ? 's' : ''}…</div>`;
+  document.getElementById('endpointDisplay').textContent =
+    jobIds.length > 1 ? `${jobIds.length} jobs` : `/jobs/${jobIds[0]}/all-data`;
+
+  const fetched = await fetchJobsAllData(jobIds, { refresh });
+  const errors = [...resolved.errors, ...fetched.errors];
+
+  const all = [];
+  const skipped = [];
+  jobIds.forEach((jobId, i) => {
+    const data = fetched.data[i];
+    if (!data) return;
+    const stage = stageIdOf(data);
+    if (t2bCompletedOnly && !COMPLETED_STAGE_IDS.has(stage)) {
+      skipped.push({ jobId, stage: stageLabel(data) || 'no stage' });
+      return;
+    }
+    all.push({ jobId, data });
+  });
+
+  if (all.length === 0) {
+    setBadge('err', 'No jobs to report');
+    const why = skipped.length
+      ? `All ${skipped.length} job(s) were filtered out by "Completed jobs only": ${skipped.map(s => `${esc(s.jobId)} (${esc(s.stage)})`).join(', ')}.`
+      : (errors.map(esc).join('<br/>') || 'No data returned. Check the Job IDs and selected program.');
+    document.getElementById('friendly-view').innerHTML = `<div class="err-block">${why}</div>`;
+    return;
+  }
+
+  t2bResult = buildTable2B(all);
+  t2bResult.rawIds = rawIds;
+  t2bResult.skipped = skipped;
+  t2bResult.errors = errors;
+  const errNote = errors.length ? ` · ${errors.length} failed` : '';
+  setBadge(errors.length ? 'err' : 'ok', `${all.length} job${all.length > 1 ? 's' : ''} reported${errNote}`);
+  renderTable2B();
+}
+
+// One control, two states: on is the filing layout, off is the single-column one. Two
+// buttons that switched each other off were a radio pair wearing toggle clothes.
+function toggleT2bLayout() {
+  t2bLayout = t2bLayout === 'cpuc' ? 'merged' : 'cpuc';
+  renderTable2B();
+}
+
+function toggleT2b(key) {
+  if (key === 'empty') t2bHideEmpty = !t2bHideEmpty;
+  if (key === 'nonMeasure') t2bIncludeNonMeasure = !t2bIncludeNonMeasure;
+  if (key === 'completed') t2bCompletedOnly = !t2bCompletedOnly;
+  // The last two change which line items and which jobs are in scope, so they need the
+  // job payloads again. The cache makes that free.
+  if (key === 'empty') { renderTable2B(); return; }
+  fetchTable2B(t2bResult ? t2bResult.rawIds : document.getElementById('jobId').value, { refresh: false });
+}
+
+// Column labels for the on-screen table. The filing sheet writes "kWh (Annual)" and so
+// on, but the qualifier costs more width than it earns when twelve numeric columns have
+// to fit — the block header already says these are year-to-date annual figures. The XLSX
+// export keeps its own fuller headings.
+const T2B_METRICS = [
+  { key: 'qty', label: 'Quantity Installed', dp: 2 },
+  { key: 'kwh', label: 'kWh', dp: 2 },
+  // kW runs to the thousandths, but only as far as it needs to: most rows are a flat 0
+  // and padding them to 0.000 reads as a measurement rather than an absence.
+  { key: 'kw', label: 'kW', dp: 3, minDp: 0 },
+  { key: 'therms', label: 'Therms', dp: 2 },
+  { key: 'cost', label: 'Expenses ($)', dp: 2 }
+];
+
+function renderTable2B() {
+  if (!t2bResult) return;
+  const { blocks, comparison, exceptions, unmapped, nonMeasure, variantMisses } = t2bResult;
+  const plus = blocks.plus, deep = blocks.deep, review = blocks.review;
+
+  let h = '<div class="measures-toolbar t2b-toolbar">';
+  h += `<span class="summary"><strong>${plus.jobs.size}</strong> Pilot Plus · <strong>${deep.jobs.size}</strong> Pilot Deep`;
+  if (review.jobs.size) h += ` · <strong>${review.jobs.size}</strong> to review`;
+  h += '</span><div class="spacer"></div>';
+  // Every filter reads the same way: "Hide X" is on when X is hidden, and all three are
+  // on by default. Mixing "Installed Only" with "Include non-measure costs" meant one
+  // chip named what it kept and the next named what it dropped.
+  const jobsHidden = t2bResult.skipped.length;
+  const chip = (on, fn, label, tip) =>
+    `<button class="tool-btn${on ? ' active' : ''}" onclick="${fn}" title="${esc(tip)}">${esc(label)}</button>`;
+  h += chip(t2bCompletedOnly, "toggleT2b('completed')", 'Hide In-Progress',
+    'Leave out jobs that are not finished — anything not at Retrofit Complete, QA or Archived Won. ' +
+    'Table 2B reports completed and expensed installations.' +
+    (jobsHidden ? ' Hiding ' + jobsHidden + ' job(s) in this set.' : ''));
+  h += chip(!t2bIncludeNonMeasure, "toggleT2b('nonMeasure')", 'Hide Non-Measure',
+    'Leave out audit, testing, marketing and mitigation spend. On matches what gets reported; ' +
+    'off folds that spend into ESA WH Outreach & Assessment so the total matches the SnuggPro project record.');
+  h += chip(t2bHideEmpty, "toggleT2b('empty')", 'Hide Empty',
+    'Leave out the measure rows with no installations in this job set.');
+  h += chip(t2bLayout === 'cpuc', 'toggleT2bLayout()', 'CPUC',
+    'On: the filing shape, a column group per program path side by side. ' +
+    'Off: one set of value columns with the path in its own column.');
+  h += '</div>';
+
+  // --- headline ---
+  h += '<div class="combined-summary"><div class="csum-grid">';
+  const totals = b => [...b.rows.values()].reduce((a, r) => ({
+    kwh: a.kwh + r.kwh, therms: a.therms + r.therms, cost: a.cost + r.cost
+  }), { kwh: 0, therms: 0, cost: 0 });
+  const pt = totals(plus), dt = totals(deep);
+  const card = (label, val, unit) =>
+    `<div class="csum-card"><div class="csum-label">${label}</div><div class="csum-val">${val}<span class="csum-unit">${unit}</span></div></div>`;
+  if (plus.jobs.size) {
+    h += card('Plus kWh', pt.kwh.toFixed(0), 'kWh');
+    h += card('Plus Therms', pt.therms.toFixed(0), 'thm');
+    h += card('Plus expenses', fmtMoney(pt.cost), '');
+  }
+  if (deep.jobs.size) {
+    h += card('Deep kWh', dt.kwh.toFixed(0), 'kWh');
+    h += card('Deep Therms', dt.therms.toFixed(0), 'thm');
+    h += card('Deep expenses', fmtMoney(dt.cost), '');
+  }
+  h += '</div>';
+  const changed = comparison.filter(c => c.disagrees).length;
+  const treated = [];
+  if (plus.jobs.size) treated.push(`Plus ${plus.singleFamily.size} single family / ${plus.mobile.size} mobile`);
+  if (deep.jobs.size) treated.push(`Deep ${deep.singleFamily.size} single family / ${deep.mobile.size} mobile`);
+  h += `<div class="csum-breakdown">Households treated — ${treated.join(' &nbsp;·&nbsp; ')}`;
+  if (changed) h += ` &nbsp;·&nbsp; <strong>${changed}</strong> job${changed > 1 ? 's' : ''} moved path after the climate-zone correction`;
+  h += '</div>';
+  // Below-5% jobs belong to neither block, so their money would otherwise be absent
+  // from the page with nothing on screen to say so.
+  if (review.jobs.size) {
+    const rt = totals(review);
+    h += `<div class="csum-breakdown"><span class="t2b-bad">${review.jobs.size} job${review.jobs.size > 1 ? 's' : ''} below 5%</span>` +
+      ` — ${fmtMoney(rt.cost)}, ${rt.kwh.toFixed(0)} kWh and ${rt.therms.toFixed(0)} therms sit in neither block. Listed under Exceptions.</div>`;
+  }
+  h += '</div>';
+
+  h += renderT2bTable(plus, deep);
+  h += renderT2bComparison(comparison);
+  h += renderT2bExceptions(exceptions, unmapped, nonMeasure, variantMisses, t2bResult.skipped, t2bResult.errors);
+
+  document.getElementById('friendly-view').innerHTML = h;
+  syncT2bHeaderOffset();
+}
+
+// The second header row pins below the first, so it needs the first row's height. That
+// height depends on the rendered font and wrapping, so it is measured rather than
+// assumed -- a wrong offset lets body rows slide into the gap between the two rows.
+//
+// Measure a cell WITHOUT rowspan. The Measures and Units cells span both header rows, so
+// measuring one of those returns the height of the pair and pins the second row roughly
+// a row too low, which is exactly the gap it is supposed to close.
+function syncT2bHeaderOffset() {
+  const table = document.querySelector('#friendly-view table.t2b');
+  if (!table) return;
+  const cell = table.querySelector('thead tr:first-child th:not([rowspan])');
+  const h = cell && cell.getBoundingClientRect().height;
+  if (h > 0) table.style.setProperty('--t2b-head-h', h + 'px');
+}
+
+// A narrower window re-wraps the group headers and changes that height.
+window.addEventListener('resize', syncT2bHeaderOffset);
+
+// One set of value columns with a Path column beside them, rather than the source
+// workbook's two side-by-side blocks. A measure installed on both paths becomes two
+// rows; a measure installed on one becomes one. Nothing is summed across paths —
+// `% of Expenditure` still divides by that path's own total.
+function mergedT2bRows(plus, deep) {
+  const out = [];
+  for (const def of reference.rows) {
+    const p = plus.rows.get(def.label), d = deep.rows.get(def.label);
+    if (!p && !d) { out.push({ def, path: '', row: null, block: null }); continue; }
+    if (p) out.push({ def, path: 'Pilot Plus', row: p, block: plus });
+    if (d) out.push({ def, path: 'Pilot Deep', row: d, block: deep });
+  }
+  return out;
+}
+
+// Shorten a measure label for the screen only. Every row carries the same efficiency
+// clause ("with 16+ SEER/95%+ AFUE"), so it costs a line of wrapping per row and
+// distinguishes nothing. The full label stays in the cell's tooltip, in the export and
+// in every lookup key. Verified collision-free across all 127 rows -- if a future row
+// list made two labels collapse together, the guard below keeps them apart.
+const T2B_LABEL_SHORTENINGS = [
+  [/\s+with\s+\d+\+[^-]*?(?=-\s)/i, ' '],
+  [/\bMobile Home\b/g, 'MH']
+];
+let t2bShortLabels = null;
+
+function buildShortLabelMap() {
+  const map = new Map(), used = new Map();
+  for (const def of reference.rows) {
+    let s = def.label;
+    T2B_LABEL_SHORTENINGS.forEach(([re, to]) => { s = s.replace(re, to); });
+    s = s.replace(/\s{2,}/g, ' ').trim();
+    // Two different measures must never read the same on screen.
+    if (used.has(s) && used.get(s) !== def.label) s = def.label;
+    else used.set(s, def.label);
+    map.set(def.label, s);
+  }
+  return map;
+}
+
+function shortMeasureLabel(label) {
+  if (!t2bShortLabels) t2bShortLabels = buildShortLabelMap();
+  return t2bShortLabels.get(label) || label;
+}
+
+// One cell for a measure name: shortened text, full text on hover when they differ.
+function measureNameCell(def, flag) {
+  const shortName = shortMeasureLabel(def.label);
+  const tip = shortName === def.label ? '' : ` title="${esc(def.label)}"`;
+  return `<td class="stick-1 measure-cell"${tip}>${esc(shortName)}${flag}</td>`;
+}
+
+// Display rounding only -- data-copy keeps the full-precision value, the same split the
+// Measures table uses so a copied cell is never the rounded figure.
+function t2bCell(v, dp, minDp) {
+  const n = Number(v) || 0;
+  const txt = n.toLocaleString('en-US', {
+    minimumFractionDigits: minDp === undefined ? dp : minDp,
+    maximumFractionDigits: dp
+  });
+  return `<td class="num copyable${n < 0 ? ' neg' : ''}" data-copy="${v}" onclick="copyCell(this)">${txt}</td>`;
+}
+
+function blockTotals(block) {
+  return [...block.rows.values()].reduce((a, r) => {
+    T2B_METRICS.forEach(m => { a[m.key] = (a[m.key] || 0) + r[m.key]; });
+    return a;
+  }, {});
+}
+
+function renderT2bTable(plus, deep) {
+  return t2bLayout === 'merged' ? renderT2bMerged(plus, deep) : renderT2bCpuc(plus, deep);
+}
+
+// The filing layout: the source workbook's own shape, both program blocks side by side.
+// The Measures and Units columns pin, because the Deep block sits far enough right that
+// the measure name would otherwise scroll out of view.
+function renderT2bCpuc(plus, deep) {
+  // A single-path job set only needs its own block. Printing an all-dashes Pilot Plus
+  // group beside a Deep job doubles the table width to say nothing. Both appear as soon
+  // as the set contains both, which is the normal case for a monthly filing.
+  const blocks = [
+    { block: plus, name: 'Pilot Plus', cls: 'blk-plus' },
+    { block: deep, name: 'Pilot Deep', cls: 'blk-deep' }
+  ].filter(b => b.block.jobs.size > 0);
+  if (!blocks.length) blocks.push({ block: plus, name: 'Pilot Plus', cls: 'blk-plus' });
+
+  const WIDE = (T2B_METRICS.length + 1) * blocks.length + 2;
+  const side = (block, label) => {
+    const r = block.rows.get(label);
+    if (!r) return T2B_METRICS.map(() => '<td class="num" style="color:#ccc">—</td>').join('') +
+      '<td class="num" style="color:#ccc">—</td>';
+    const share = block.cost ? r.cost / block.cost : 0;
+    return T2B_METRICS.map(m => t2bCell(r[m.key], m.dp, m.minDp)).join('') +
+      `<td class="num copyable" data-copy="${share}" onclick="copyCell(this)">${(share * 100).toFixed(3)}%</td>`;
+  };
+
+  const group = (cls, name) =>
+    `<th class="${cls} blk-head" colspan="${T2B_METRICS.length + 1}">ESA Program — ${name}</th>`;
+  const heads = cls => T2B_METRICS.map(m => `<th class="${cls}">${m.label}</th>`).join('') +
+    `<th class="${cls}">% of Expenditure</th>`;
+
+  let h = '<div class="table-scroll"><table class="measures t2b"><thead>';
+  h += '<tr><th class="stick-1" rowspan="2">Measures</th><th class="stick-2" rowspan="2">Units</th>' +
+    blocks.map(b => group(b.cls, b.name)).join('') + '</tr>';
+  h += `<tr>${blocks.map(b => heads(b.cls)).join('')}</tr></thead><tbody>`;
+
+  let category = null, shown = 0, hidden = 0;
+  for (const def of reference.rows) {
+    const present = blocks.some(b => b.block.rows.get(def.label));
+    if (!present && t2bHideEmpty) { hidden++; continue; }
+    if (def.category !== category) {
+      category = def.category;
+      // The workbook writes the category in the measure column with "Total" beside it.
+      h += `<tr class="t2b-cat"><td class="stick-1">${esc(category || '')}</td>` +
+        `<td class="stick-2">Total</td><td colspan="${WIDE - 2}"></td></tr>`;
+    }
+    const flag = blocks.some(b => { const r = b.block.rows.get(def.label); return r && r.estimated; })
+      ? ' <span class="t2b-estimated" title="Estimated mapping: this measure was matched by reading its name, not from a documented crosswalk. Confirm against a filed report before relying on the row.">Estimated</span>' : '';
+    h += '<tr>' + measureNameCell(def, flag) +
+      `<td class="stick-2">${esc(def.unit)}</td>` + blocks.map(b => side(b.block, def.label)).join('') + '</tr>';
+    shown++;
+  }
+
+  const grand = block => {
+    const t = blockTotals(block);
+    return T2B_METRICS.map(m => t2bCell(t[m.key] || 0, m.dp, m.minDp)).join('') +
+      `<td class="num">${block.cost ? '100.000%' : '—'}</td>`;
+  };
+  h += '<tr class="t2b-total"><td class="stick-1">Total Savings/Expenditures</td><td class="stick-2"></td>' +
+    blocks.map(b => grand(b.block)).join('') + '</tr>';
+  h += '</tbody></table></div>';
+  if (hidden) h += `<div class="t2b-note">${shown} of ${reference.rows.length} measure rows shown — ${hidden} with no installations are hidden.</div>`;
+  return h;
+}
+
+// The working layout: one set of value columns with a Path column beside them. A measure
+// installed on both paths becomes two rows. Nothing is summed across paths — the
+// percentage still divides by that path's own total.
+function renderT2bMerged(plus, deep) {
+  const COLS = T2B_METRICS.length + 1;
+  const values = (row, block) => {
+    if (!row) return T2B_METRICS.map(() => '<td class="num" style="color:#ccc">—</td>').join('') +
+      '<td class="num" style="color:#ccc">—</td>';
+    const share = block.cost ? row.cost / block.cost : 0;
+    return T2B_METRICS.map(m => t2bCell(row[m.key], m.dp, m.minDp)).join('') +
+      `<td class="num copyable" data-copy="${share}" onclick="copyCell(this)">${(share * 100).toFixed(3)}%</td>`;
+  };
+  const pathCell = path => path
+    ? `<td class="t2b-path ${path === 'Pilot Plus' ? 'path-plus' : 'path-deep'}">${path}</td>`
+    : '<td style="color:#ccc">—</td>';
+
+  let h = '<div class="table-scroll"><table class="measures t2b"><thead><tr>';
+  h += '<th class="stick-1">Measures</th><th class="stick-2">Units</th><th>Path</th>' +
+    T2B_METRICS.map(m => `<th>${m.label}</th>`).join('') +
+    '<th>% of Expenditure</th></tr></thead><tbody>';
+
+  let category = null, shown = 0, hidden = 0;
+  for (const entry of mergedT2bRows(plus, deep)) {
+    if (!entry.row && t2bHideEmpty) { hidden++; continue; }
+    if (entry.def.category !== category) {
+      category = entry.def.category;
+      h += `<tr class="t2b-cat"><td class="stick-1">${esc(category || '')}</td>` +
+        `<td class="stick-2">Total</td><td colspan="${COLS + 1}"></td></tr>`;
+    }
+    const flag = entry.row && entry.row.estimated
+      ? ' <span class="t2b-estimated" title="Estimated mapping: this measure was matched by reading its name, not from a documented crosswalk. Confirm against a filed report before relying on the row.">Estimated</span>' : '';
+    h += '<tr>' + measureNameCell(entry.def, flag) +
+      `<td class="stick-2">${esc(entry.def.unit)}</td>` +
+      pathCell(entry.path) + values(entry.row, entry.block) + '</tr>';
+    shown++;
+  }
+
+  // One total per path. Summing the two would report a figure the program does not have.
+  const totalRow = (block, path) => {
+    const t = blockTotals(block);
+    return '<tr class="t2b-total"><td class="stick-1">Total Savings/Expenditures</td><td class="stick-2"></td>' +
+      pathCell(path) + T2B_METRICS.map(m => t2bCell(t[m.key] || 0, m.dp, m.minDp)).join('') +
+      `<td class="num">${block.cost ? '100.000%' : '—'}</td></tr>`;
+  };
+  h += (plus.jobs.size ? totalRow(plus, 'Pilot Plus') : '') +
+    (deep.jobs.size ? totalRow(deep, 'Pilot Deep') : '');
+  h += '</tbody></table></div>';
+  if (hidden) h += `<div class="t2b-note">${shown} row${shown === 1 ? '' : 's'} shown — ${hidden} measure${hidden === 1 ? '' : 's'} with no installations are hidden.</div>`;
+  return h;
+}
+
+function renderT2bComparison(rows) {
+  const sorted = [...rows].sort((a, b) =>
+    (b.disagrees - a.disagrees) || (a.supported - b.supported) || String(a.jobId).localeCompare(String(b.jobId)));
+  const pct = v => v == null ? '—' : v.toFixed(1) + '%';
+  const delta = v => {
+    const n = Number(v) || 0;
+    if (Math.abs(n) < 0.005) return '<td class="num" style="color:#ccc">—</td>';
+    return `<td class="num${n < 0 ? ' neg' : ''}">${n > 0 ? '+' : ''}${n.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>`;
+  };
+  let h = '<div class="t2b-panel"><h3>SnuggPro vs. climate-zone corrected</h3>';
+  h += '<div class="table-scroll"><table class="measures"><thead><tr>' +
+    ['Job', 'ZIP', 'Zone', 'HVAC', 'Stage', 'SnuggPro %', 'Corrected %', 'SnuggPro path', 'Reported path', 'Δ kWh', 'Δ Therms', 'Bill months']
+      .map(l => `<th>${l}</th>`).join('') + '</tr></thead><tbody>';
+  for (const r of sorted) {
+    const zoneCell = r.supported ? esc(r.cz) : `<span class="t2b-bad">${esc(r.cz)}</span>`;
+    h += `<tr><td>${esc(r.jobId)}</td><td>${esc(r.zip || '—')}</td><td>${zoneCell}</td><td>${esc(r.hvac || '—')}</td>` +
+      `<td>${esc(r.stage || '—')}</td><td class="num">${pct(r.snuggPct)}</td><td class="num">${pct(r.recalcPct)}</td>` +
+      `<td>${pathLabel(r.snuggPath)}</td>` +
+      `<td>${r.disagrees ? `<strong>${pathLabel(r.path)}</strong>` : pathLabel(r.path)}</td>` +
+      delta(r.deltaKwh) + delta(r.deltaTherms) +
+      `<td class="num${r.months < 12 ? ' neg' : ''}">${r.months}</td></tr>`;
+  }
+  h += '</tbody></table></div></div>';
+  return h;
+}
+
+function renderT2bExceptions(exceptions, unmapped, nonMeasure, variantMisses, skipped, errors) {
+  let h = '<div class="t2b-panel"><h3>Exceptions</h3>';
+
+  if (errors && errors.length) {
+    h += '<h4>Jobs that failed to load</h4><ul class="t2b-list">' +
+      errors.map(e => `<li>${esc(e)}</li>`).join('') + '</ul>';
+  }
+  if (skipped && skipped.length) {
+    h += `<h4>Filtered out by "Completed jobs only" (${skipped.length})</h4><ul class="t2b-list">` +
+      skipped.map(s => `<li>${esc(s.jobId)} — ${esc(s.stage)}</li>`).join('') + '</ul>';
+  }
+  if (exceptions.length) {
+    const byKind = new Map();
+    exceptions.forEach(e => {
+      if (!byKind.has(e.kind)) byKind.set(e.kind, []);
+      byKind.get(e.kind).push(e);
+    });
+    for (const [kind, list] of byKind) {
+      h += `<h4>${esc(kind)} (${list.length})</h4><ul class="t2b-list">` +
+        list.map(e => `<li><strong>${esc(e.jobId)}</strong> — ${esc(e.detail)}</li>`).join('') + '</ul>';
+    }
+  }
+
+  if (variantMisses && variantMisses.length) {
+    const lines = variantMisses.reduce((a, m) => a + m.n, 0);
+    h += `<h4>Measures with no catalog row for the home (${lines} line items)</h4>`;
+    h += '<div class="t2b-note">These carry their cost into Table 2B but no deemed savings. Savings within one climate zone can differ by more than 50x between heating systems, so no row is picked for them.</div>';
+    h += '<ul class="t2b-list">' + variantMisses
+      .map(m => `<li><strong>${esc(m.code)}</strong> — ${esc(m.reason)} (${m.n} line item${m.n > 1 ? 's' : ''}, ${m.jobs.size} job${m.jobs.size > 1 ? 's' : ''})</li>`)
+      .join('') + '</ul>';
+  }
+
+  const spend = list => list.reduce((a, u) => a + u.cost, 0);
+  if (nonMeasure.length) {
+    const total = spend(nonMeasure);
+    h += `<h4>Costs with no Table 2B row — ${fmtMoney(total)} across ${nonMeasure.length} kinds</h4>`;
+    h += `<div class="t2b-note">${t2bIncludeNonMeasure
+      ? 'Currently included, filed under ESA WH Outreach &amp; Assessment.'
+      : 'Currently excluded, matching what gets reported. Turn on "Include non-measure costs" to reconcile against the SnuggPro project record.'}</div>`;
+    h += '<ul class="t2b-list">' + nonMeasure
+      .sort((a, b) => b.cost - a.cost)
+      .map(u => `<li>${fmtMoney(u.cost)} — ${esc(u.group || u.label)} (${u.n} line item${u.n > 1 ? 's' : ''}, ${u.jobs.size} job${u.jobs.size > 1 ? 's' : ''})</li>`)
+      .join('') + '</ul>';
+  }
+  if (unmapped.length) {
+    h += `<h4>Unmapped line items — ${fmtMoney(spend(unmapped))} across ${unmapped.length} kinds</h4>`;
+    h += '<div class="t2b-note">These reached no Table 2B row and no cost group. Add a rule to tools/build-reference.js and regenerate to fold them in.</div>';
+    h += '<ul class="t2b-list">' + unmapped
+      .sort((a, b) => b.cost - a.cost)
+      .map(u => `<li>${fmtMoney(u.cost)} — ${esc(u.label || '(no name)')} (${u.n} line item${u.n > 1 ? 's' : ''})</li>`)
+      .join('') + '</ul>';
+  }
+  if (!errors.length && !skipped.length && !exceptions.length && !nonMeasure.length &&
+      !unmapped.length && !(variantMisses && variantMisses.length)) {
+    h += '<div class="t2b-note">Nothing to flag.</div>';
+  }
+  return h + '</div>';
+}
+// ---------- END TABLE 2B ----------
+
 function renderFriendly(data) {
   const el = document.getElementById('friendly-view');
   if (data === null || data === undefined) { el.innerHTML = '<div class="empty-state">Empty response</div>'; return; }
@@ -1397,6 +2519,13 @@ function setView(v) {
   document.getElementById('raw-view').style.display = v === 'raw' ? 'block' : 'none';
   document.getElementById('btnFriendly').classList.toggle('active', v === 'friendly');
   document.getElementById('btnRaw').classList.toggle('active', v === 'raw');
+}
+
+// The export lives in the view toolbar rather than the filter row, so it has to be shown
+// and hidden with the view it belongs to.
+function showExport2b(on) {
+  const btn = document.getElementById('btnExport2b');
+  if (btn) btn.style.display = on ? '' : 'none';
 }
 
 function setBadge(type, text) {
@@ -1635,6 +2764,162 @@ async function exportXlsx() {
 
   const note = errors.length ? ` · ${errors.length} error(s)` : '';
   setBadge('ok', `Exported ${filename}${note}`);
+}
+// The measures export patches a supplied template because its sheet layout is fixed by
+// the reporting upload schema. Table 2B has no such template — its shape comes from the
+// monthly workbook, which this tool already reads — so it writes a whole workbook
+// instead. Inline strings mean no sharedStrings part, and no Excel tables means none of
+// the xl/tables/*.xml relationship trouble the template export has to work around.
+function buildXlsx(sheets) {
+  const zip = new JSZip();
+  const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+  zip.file('_rels/.rels', XML +
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+    `<Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+
+  zip.file('[Content_Types].xml', XML +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    sheets.map((_, i) =>
+      `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+    ).join('') + '</Types>');
+
+  zip.file('xl/workbook.xml', XML +
+    `<workbook xmlns="${NS}" xmlns:r="${REL}"><sheets>` +
+    sheets.map((s, i) =>
+      // Excel rejects a sheet name over 31 characters or containing []:*?/\
+      `<sheet name="${esc(String(s.name).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`
+    ).join('') + '</sheets></workbook>');
+
+  zip.file('xl/_rels/workbook.xml.rels', XML +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    sheets.map((_, i) =>
+      `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`
+    ).join('') + '</Relationships>');
+
+  sheets.forEach((sheet, si) => {
+    const rows = sheet.rows.map((cells, ri) => {
+      const r = ri + 1;
+      const xml = cells.map((v, ci) => {
+        if (v === null || v === undefined || v === '') return '';
+        const ref = colIdxToLetter(ci) + r;
+        return (typeof v === 'number' && Number.isFinite(v))
+          ? `<c r="${ref}"><v>${v}</v></c>`
+          : `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${r}">${xml}</row>`;
+    }).join('');
+    zip.file(`xl/worksheets/sheet${si + 1}.xml`, XML + `<worksheet xmlns="${NS}"><sheetData>${rows}</sheetData></worksheet>`);
+  });
+
+  return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
+async function exportTable2BXlsx() {
+  if (!t2bResult) { alert('Fetch a job set into the Table 2B view first.'); return; }
+  setBadge('loading', 'Building XLSX…');
+  const { blocks, comparison, exceptions, unmapped, nonMeasure, variantMisses } = t2bResult;
+  const plus = blocks.plus, deep = blocks.deep;
+  const dateStr = new Date().toISOString().slice(0, 10);
+
+  // --- sheet 1: the report block ---
+  // Flat, one header row, both program blocks on the same line, so a row can be read
+  // across or pivoted without unpicking the merged headers of the source workbook.
+  const side = (block, label) => {
+    const r = block.rows.get(label);
+    if (!r) return [0, 0, 0, 0, 0, 0];
+    return [r.qty, r.kwh, r.kw, r.therms, r.cost, block.cost ? r.cost / block.cost : 0];
+  };
+  const grand = block => {
+    const t = [...block.rows.values()].reduce((a, r) => ({
+      qty: a.qty + r.qty, kwh: a.kwh + r.kwh, kw: a.kw + r.kw, therms: a.therms + r.therms, cost: a.cost + r.cost
+    }), { qty: 0, kwh: 0, kw: 0, therms: 0, cost: 0 });
+    return [t.qty, t.kwh, t.kw, t.therms, t.cost, block.cost ? 1 : 0];
+  };
+  const t2bRows = [
+    ['ESA Table 2B — Pilot Plus and Pilot Deep'],
+    [`Generated ${dateStr} · ${plus.jobs.size + deep.jobs.size} jobs · program ${selectedProgram}` +
+      (t2bIncludeNonMeasure ? ' · non-measure costs included' : ' · non-measure costs excluded') +
+      (t2bCompletedOnly ? ' · completed jobs only' : ' · all stages')],
+    []
+  ];
+
+  if (t2bLayout === 'merged') {
+    // One set of value columns; the path is a column. A measure on both paths writes two
+    // rows, a measure on one writes one, and a measure on neither writes a single zero
+    // row so the filing skeleton stays intact.
+    t2bRows.push(['Category', 'Measure', 'Unit', 'Path',
+      'Quantity Installed', 'kWh (Annual)', 'kW (Annual)', 'Therms (Annual)', 'Expenses ($)', '% of Expenditure']);
+    for (const e of mergedT2bRows(plus, deep)) {
+      const v = e.row
+        ? [e.row.qty, e.row.kwh, e.row.kw, e.row.therms, e.row.cost, e.block.cost ? e.row.cost / e.block.cost : 0]
+        : [0, 0, 0, 0, 0, 0];
+      t2bRows.push([e.def.category || '', e.def.label, e.def.unit, e.path, ...v]);
+    }
+    t2bRows.push([]);
+    t2bRows.push(['', 'Total Savings/Expenditures', '', 'Pilot Plus', ...grand(plus)]);
+    t2bRows.push(['', 'Total Savings/Expenditures', '', 'Pilot Deep', ...grand(deep)]);
+    t2bRows.push(['', 'Single Family Households Treated', 'Home', 'Pilot Plus', plus.singleFamily.size]);
+    t2bRows.push(['', 'Single Family Households Treated', 'Home', 'Pilot Deep', deep.singleFamily.size]);
+    t2bRows.push(['', 'Mobile Homes Treated', 'Home', 'Pilot Plus', plus.mobile.size]);
+    t2bRows.push(['', 'Mobile Homes Treated', 'Home', 'Pilot Deep', deep.mobile.size]);
+    t2bRows.push(['', 'Total Number of Households Treated', 'Home', 'Pilot Plus', plus.jobs.size]);
+    t2bRows.push(['', 'Total Number of Households Treated', 'Home', 'Pilot Deep', deep.jobs.size]);
+  } else {
+    t2bRows.push(['Category', 'Measure', 'Unit',
+      'Plus Quantity', 'Plus kWh', 'Plus kW', 'Plus Therms', 'Plus Expenses ($)', 'Plus % of Expenditure',
+      'Deep Quantity', 'Deep kWh', 'Deep kW', 'Deep Therms', 'Deep Expenses ($)', 'Deep % of Expenditure']);
+    // Every 2B row is written, installed or not — a zero row is a reported figure.
+    for (const def of reference.rows) {
+      t2bRows.push([def.category || '', def.label, def.unit, ...side(plus, def.label), ...side(deep, def.label)]);
+    }
+    t2bRows.push([]);
+    t2bRows.push(['', 'Total Savings/Expenditures', '', ...grand(plus), ...grand(deep)]);
+    t2bRows.push(['', 'Single Family Households Treated', 'Home', plus.singleFamily.size, '', '', '', '', '', deep.singleFamily.size]);
+    t2bRows.push(['', 'Mobile Homes Treated', 'Home', plus.mobile.size, '', '', '', '', '', deep.mobile.size]);
+    t2bRows.push(['', 'Total Number of Households Treated', 'Home', plus.jobs.size, '', '', '', '', '', deep.jobs.size]);
+  }
+
+  // --- sheet 2: per job, both sides of the comparison ---
+  const jobRows = [[
+    'AuditId', 'ZIP', 'Climate Zone', 'Zone supported', 'HVAC Type', 'Stage', 'Type of Home',
+    'SnuggPro %', 'Zone-corrected %', 'SnuggPro Path', 'Reported Path', 'Path basis', 'Path changed',
+    'Reported kWh', 'Reported Therms', 'Delta kWh vs SnuggPro', 'Delta Therms vs SnuggPro', 'Billing months'
+  ]];
+  comparison.forEach(c => jobRows.push([
+    c.jobId, c.zip, c.cz, c.supported ? 'Yes' : 'No', c.hvac, c.stage, c.home,
+    c.snuggPct == null ? '' : c.snuggPct, c.recalcPct == null ? '' : c.recalcPct,
+    pathLabel(c.snuggPath), pathLabel(c.path), c.basis, c.disagrees ? 'Yes' : 'No',
+    c.kwh, c.therms, c.deltaKwh, c.deltaTherms, c.months
+  ]));
+
+  // --- sheet 3: everything that needs a human ---
+  const excRows = [['Kind', 'AuditId', 'Detail', 'Line items', 'Cost']];
+  exceptions.forEach(e => excRows.push([e.kind, e.jobId, e.detail, '', '']));
+  (t2bResult.skipped || []).forEach(s => excRows.push(['Filtered out (not completed)', s.jobId, s.stage, '', '']));
+  (t2bResult.errors || []).forEach(e => excRows.push(['Job failed to load', '', e, '', '']));
+  nonMeasure.forEach(u => excRows.push([
+    'Cost with no 2B row' + (t2bIncludeNonMeasure ? ' (included)' : ' (excluded)'),
+    '', u.group || u.label, u.n, u.cost]));
+  unmapped.forEach(u => excRows.push(['Unmapped line item', '', u.label || '(no name)', u.n, u.cost]));
+  (variantMisses || []).forEach(m => excRows.push([
+    'No catalog row for the home', '', m.code + ' — ' + m.reason, m.n, '']));
+
+  const bytes = await buildXlsx([
+    { name: 'Table 2B', rows: t2bRows },
+    { name: 'By Job', rows: jobRows },
+    { name: 'Exceptions', rows: excRows }
+  ]);
+  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const tag = comparison.length === 1 ? comparison[0].jobId : `${comparison.length}jobs`;
+  const filename = `table2b_${tag}_${dateStr}.xlsx`;
+  await saveOrDownload(blob, filename);
+  setBadge('ok', `Exported ${filename}`);
 }
 // ---------- END XLSX EXPORT ----------
 </script>

@@ -1,0 +1,767 @@
+{
+  "source": "ESA-Whole-Home-Monthly-through-2026-07_REV-A.xlsx",
+  "rows": [
+    {
+      "label": "Energy Star Chest Freezer: 14-18 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 9
+    },
+    {
+      "label": "Energy Star Chest Freezer: 20-22 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 10
+    },
+    {
+      "label": "Energy Star Chest Freezer: 5-9 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 11
+    },
+    {
+      "label": "Energy Star Qualified Clothes Washer",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 12
+    },
+    {
+      "label": "HP Washer/Dryer Combo Unit",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 13
+    },
+    {
+      "label": "Energy Star Qualified Dishwashers",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 14
+    },
+    {
+      "label": "Energy Star Qualified Refrigerators - Large 20+ cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 15
+    },
+    {
+      "label": "Energy Star Qualified Refrigerators - Medium 17 - 19 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 16
+    },
+    {
+      "label": "Energy Star Qualified Refrigerators - Small 14-16 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 17
+    },
+    {
+      "label": "Energy Star Upright Freezer: 13.5-15 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 18
+    },
+    {
+      "label": "Energy Star Upright Freezer: 16-18 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 19
+    },
+    {
+      "label": "Energy Star Upright Freezer: 20-22 cf",
+      "category": "Appliances",
+      "unit": "Each",
+      "sheetRow": 20
+    },
+    {
+      "label": "Energy Star Qualified Ceiling Fans",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 22
+    },
+    {
+      "label": "Whole House Fan",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 23
+    },
+    {
+      "label": "Evaporative cooler installation 3,000 CFM",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 24
+    },
+    {
+      "label": "Evaporative cooler installation 4,000 CFM",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 25
+    },
+    {
+      "label": "Evaporative cooler installation 5,000 CFM",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 26
+    },
+    {
+      "label": "Replace Room AC with Energy Start Qualified RAC - 10k BTU",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 27
+    },
+    {
+      "label": "Replace Room AC with Energy Start Qualified RAC - 12k BTU",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 28
+    },
+    {
+      "label": "Replace Room AC with Energy Start Qualified RAC - 15k BTU",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 29
+    },
+    {
+      "label": "Replace Room AC with Energy Start Qualified RAC - 6-8k BTU",
+      "category": "Cooling Measures",
+      "unit": "Each",
+      "sheetRow": 30
+    },
+    {
+      "label": "Faucet Aerator",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 32
+    },
+    {
+      "label": "Low-Flow Showerhead - Handheld",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 33
+    },
+    {
+      "label": "Low-Flow Showerhead - Regular",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 34
+    },
+    {
+      "label": "Energy Star HE Gas Storage Water Heater - 40G",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 35
+    },
+    {
+      "label": "Energy Star HE Gas Storage Water Heater - 50G",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 36
+    },
+    {
+      "label": "Replace existing electric W/H with HP Water Heater - 40G",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 37
+    },
+    {
+      "label": "Replace existing electric W/H with HP Water Heater - 50G",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 38
+    },
+    {
+      "label": "Replace existing electric W/H with HP Water Heater - 80G",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 39
+    },
+    {
+      "label": "Replace with Solar Water Heating w/storage back up",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 40
+    },
+    {
+      "label": "Replace with Solar Water Heating w/tankless back up",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 41
+    },
+    {
+      "label": "Replace with Tankless Water Heater",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 42
+    },
+    {
+      "label": "Thermostatic Shower Valve",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 43
+    },
+    {
+      "label": "Thermostatic Tub Spout/Diverter",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 44
+    },
+    {
+      "label": "Water Heater - Repair water leak - NTE $300",
+      "category": "Domestic Hot Water",
+      "unit": "T&M",
+      "sheetRow": 45
+    },
+    {
+      "label": "Water Heater Blanket",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 46
+    },
+    {
+      "label": "Water Heater Pipe Insulation",
+      "category": "Domestic Hot Water",
+      "unit": "Each",
+      "sheetRow": 47
+    },
+    {
+      "label": "Attic Cover Replacement",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 49
+    },
+    {
+      "label": "Attic Insulation, Add R-11",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 50
+    },
+    {
+      "label": "Attic Insulation, Add R-19",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 51
+    },
+    {
+      "label": "Attic Insulation, Add R-30",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 52
+    },
+    {
+      "label": "Attic Insulation, Add R-38",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 53
+    },
+    {
+      "label": "Attic Insulation, Add R-49",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 54
+    },
+    {
+      "label": "Caulking",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 55
+    },
+    {
+      "label": "Cover Plate Gaskets",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 56
+    },
+    {
+      "label": "Duct Sealing - 120 Minutes",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 57
+    },
+    {
+      "label": "Duct Sealing - 60 Minutes",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 58
+    },
+    {
+      "label": "Duct Sealing - 90 Minutes",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 59
+    },
+    {
+      "label": "Floor Insulation, Add R-19",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 60
+    },
+    {
+      "label": "Glass Replacement",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 61
+    },
+    {
+      "label": "High Efficiency Windows",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 62
+    },
+    {
+      "label": "High-Performance Cool Roofs",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 63
+    },
+    {
+      "label": "Insulated Exterior Doors",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 64
+    },
+    {
+      "label": "Kitchen Exhaust Dampers",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 65
+    },
+    {
+      "label": "Minor Home / Envelop Repairs - NTE $600",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 66
+    },
+    {
+      "label": "Prescriptive Duct Sealing (No HVAC Replacement)",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 67
+    },
+    {
+      "label": "Radiant Barriers",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 68
+    },
+    {
+      "label": "Room AC/Evaporative Cooler Cover",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 69
+    },
+    {
+      "label": "Wall Insulation, Add R-13",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 70
+    },
+    {
+      "label": "Weather-stripping",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 71
+    },
+    {
+      "label": "Window Film (Tint)",
+      "category": "Enclosure",
+      "unit": "Each",
+      "sheetRow": 72
+    },
+    {
+      "label": "Duct Insulation (R-6)",
+      "category": "HVAC",
+      "unit": "Per Linear Foot",
+      "sheetRow": 74
+    },
+    {
+      "label": "Duct Repair",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 75
+    },
+    {
+      "label": "Duct Replacement",
+      "category": "HVAC",
+      "unit": "Per Linear Foot",
+      "sheetRow": 76
+    },
+    {
+      "label": "Duct Test - Title 24 or to perform duct sealing",
+      "category": "HVAC",
+      "unit": "Per System",
+      "sheetRow": 77
+    },
+    {
+      "label": "ECM Blower Motor",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 78
+    },
+    {
+      "label": "Efficient Fan Controller",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 79
+    },
+    {
+      "label": "HE Wall Furnace 82% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 80
+    },
+    {
+      "label": "HVAC System - Filter Replacement (No HVAC Replacement)",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 81
+    },
+    {
+      "label": "HVAC Tune-up",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 82
+    },
+    {
+      "label": "Mobile Home Split System, 2 TON 16 SEER/60 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 83
+    },
+    {
+      "label": "Mobile Home Split System, 2 TON 16 SEER/75 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 84
+    },
+    {
+      "label": "Mobile Home Split System, 3 TON 16 SEER/60 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 85
+    },
+    {
+      "label": "Mobile Home Split System, 3 TON 16 SEER/75 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 86
+    },
+    {
+      "label": "Mobile Home Split System, 4 TON 16 SEER/72 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 87
+    },
+    {
+      "label": "Replace FAU with HE FAU, 100 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 88
+    },
+    {
+      "label": "Replace FAU with HE FAU, 40 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 89
+    },
+    {
+      "label": "Replace FAU with HE FAU, 60 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 90
+    },
+    {
+      "label": "Replace FAU with HE FAU, 80 KBTU 95% AFUE",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 91
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 2 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 92
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 93
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 3 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 94
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 3 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 95
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 4 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 96
+    },
+    {
+      "label": "Replace Package G/E with 16+ SEER/80%+ AFUE - 5 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 97
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 2 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 98
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 99
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 3 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 100
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 3 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 101
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 4 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 102
+    },
+    {
+      "label": "Replace Package HP with 16+ SEER/8.5+ HSPF - 5 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 103
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 2 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 104
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 105
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 3 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 106
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 3 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 107
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 4 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 108
+    },
+    {
+      "label": "Replace Split AC Only with 16+ SEER - 5 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 109
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 2 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 110
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 111
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 3 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 112
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 3 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 113
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 4 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 114
+    },
+    {
+      "label": "Replace Split HP System with 16+ SEER/8.8+ HSPF - 5 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 115
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 2 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 116
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 117
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 3 1/2 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 118
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 3 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 119
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 4 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 120
+    },
+    {
+      "label": "Replace Split System with 16+ SEER/95%+ AFUE - 5 Ton",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 121
+    },
+    {
+      "label": "Smart Thermostat",
+      "category": "HVAC",
+      "unit": "Each",
+      "sheetRow": 122
+    },
+    {
+      "label": "CO/Smoke Alarm Combo",
+      "category": "Maintenance",
+      "unit": "Each",
+      "sheetRow": 124
+    },
+    {
+      "label": "Comprehensive Home Health and Safety Check-up",
+      "category": "Maintenance",
+      "unit": "Per Home",
+      "sheetRow": 125
+    },
+    {
+      "label": "Furnace Clean and Tune",
+      "category": "Maintenance",
+      "unit": "Each",
+      "sheetRow": 126
+    },
+    {
+      "label": "Range Hood",
+      "category": "Maintenance",
+      "unit": "Each",
+      "sheetRow": 127
+    },
+    {
+      "label": "Smoke Alarm",
+      "category": "Maintenance",
+      "unit": "Each",
+      "sheetRow": 128
+    },
+    {
+      "label": "Exterior LED Security Light (photocell and motion sensor)",
+      "category": "Lighting",
+      "unit": "Each",
+      "sheetRow": 130
+    },
+    {
+      "label": "LED Fixtures - Exterior",
+      "category": "Lighting",
+      "unit": "Each",
+      "sheetRow": 131
+    },
+    {
+      "label": "LED Fixtures - Interior",
+      "category": "Lighting",
+      "unit": "Each",
+      "sheetRow": 132
+    },
+    {
+      "label": "LED Lamps - 40w Equivalent",
+      "category": "Lighting",
+      "unit": "Each",
+      "sheetRow": 133
+    },
+    {
+      "label": "LED Lamps - 60w Equivalent",
+      "category": "Lighting",
+      "unit": "Each",
+      "sheetRow": 134
+    },
+    {
+      "label": "Energy Star Qualified Variable Speed Pool pumps",
+      "category": "Miscellaneous",
+      "unit": "Each",
+      "sheetRow": 136
+    },
+    {
+      "label": "Home Energy Monitor",
+      "category": "Miscellaneous",
+      "unit": "Each",
+      "sheetRow": 137
+    },
+    {
+      "label": "Tier 2 Smart Power Strips",
+      "category": "Miscellaneous",
+      "unit": "Each",
+      "sheetRow": 138
+    },
+    {
+      "label": "Vacancy Sensors",
+      "category": "Miscellaneous",
+      "unit": "Each",
+      "sheetRow": 139
+    },
+    {
+      "label": "Permits",
+      "category": "Permitting Fees",
+      "unit": "Each",
+      "sheetRow": 141
+    },
+    {
+      "label": "ESA WH Outreach & Assessment",
+      "category": "Customer Enrollment",
+      "unit": "Home",
+      "sheetRow": 143
+    },
+    {
+      "label": "ESA WH In-Home Energy Education (1)",
+      "category": "Customer Enrollment",
+      "unit": "Home",
+      "sheetRow": 144
+    }
+  ]
+}

@@ -89,6 +89,28 @@ Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into 
 - **Download CSV** — exports the full set (`usage_job_{id}.csv`) at full precision.
 - Supports multiple Job IDs at once; the TOTAL row sums billed days and MMBTU (usage is mixed-unit, so its total is omitted).
 
+### Table 2B (Reporting)
+
+Builds the ESA monthly report's Table 2B — the Pilot Plus and Pilot Deep blocks side by side — from the same job set, and shows what SnuggPro says next to what the numbers should be.
+
+SnuggPro does not choose deemed savings by climate zone: its per-unit values are the CZ10 row of the consolidated measure list for every home. Within one zone the same measure can differ by more than 50× between heating systems, and across zones by up to 7×, which is why jobs near the 5% and 15% path boundaries land in the wrong block. This view re-reads every installed measure against the home's actual zone (from the job ZIP) and re-runs the DeemedSavingsCalculator percentage for the jobs SnuggPro puts in the Plus band.
+
+- **Table 2B** — every measure row in report order, both program blocks, with quantity, kWh, kW, therms, expenses and % of expenditure. Cells copy at full precision like the Measures Table.
+- **SnuggPro vs. corrected** — per job: ZIP, climate zone, HVAC type, both percentages, both paths, and the savings the correction moved. Disagreements sort first.
+- **Exceptions** — jobs whose path changed, zones with no published measures, measures with no catalog row for that home, unpaired system halves, short billing history, and any line item that reached no 2B row, with the dollars each carries.
+- **Toggles** — *Completed jobs only* (2B reports completed and expensed installations), *Include non-measure costs* (rolls audit, blower-door, testing and marketing spend into ESA WH Outreach & Assessment so the block reconciles 1:1 with the SnuggPro project record — off by default, matching what gets reported), and *Hide empty rows*.
+- **Export 2B XLSX** — three sheets: `Table 2B`, `By Job`, `Exceptions`.
+
+Reference data is generated from the ESA source workbooks and committed under `public/reference/`. Regenerate it whenever one of those workbooks is revised:
+
+```bash
+node tools/build-reference.js      # reads the workbooks in ../report-tool
+node tools/verify-reference.js     # join coverage against a real export
+node tools/verify-calculator.js    # reproduces DeemedSavingsCalculator's worked example
+node tools/verify-table2b.js       # end-to-end on a synthetic job
+node tools/verify-cpuc.js          # reconciles against the filed Summary_CPUC-*.csv
+```
+
 ## Files
 
 - `worker.js` — Cloudflare Worker: email-code login + signing proxy + serves the UI (team deployment)
@@ -96,7 +118,11 @@ Also pulls `/jobs/{id}/all-data` and flattens the `utilities` bill history into 
 - `public/index.html` — browser UI (no build step, no framework)
 - `public/template_range.xlsx` — XLSX export template (single source, served by both proxy and Worker)
 - `template.xlsx` — legacy XLSX template (kept for reference)
-- `proxy.js` — local signing proxy: serves UI, templates, `/programs`, and saves exports
+- `proxy.js` — local signing proxy: serves UI, templates, `/reference/*.json`, `/programs`, and saves exports
+- `public/reference/` — generated ESA reference data for the Table 2B view (climate zones, deemed savings by zone, the 2B row list, the measure crosswalk, the fee schedule)
+- `tools/build-reference.js` — regenerates `public/reference/` from the ESA workbooks; holds the curated crosswalk
+- `tools/xlsx-read.js` — dependency-free XLSX reader used by the tools
+- `tools/verify-*.js` — hand-run checks for the reference data and the Table 2B math
 - `exports/` — where local-mode CSV/XLSX exports are saved (contents gitignored)
 - `start.bat` / `stop.bat` / `restart.bat` — Windows one-click launchers for `wrangler dev` (port 2023)
 - `setup-portable.bat` / `start-portable.bat` — USB prep (download Node into `runtime/`) and double-click launch of `proxy.js`

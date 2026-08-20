@@ -98,6 +98,23 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Reference data for the Table 2B view (climate zones, deemed savings, crosswalk).
+  // The hosted Worker already serves public/ as static assets, so this route exists
+  // only for the local proxy. The pattern is deliberately strict — no path separators,
+  // no dots in the stem, .json only — so a crafted URL cannot walk out of the folder.
+  const refMatch = /^\/reference\/([A-Za-z0-9_-]+\.json)$/.exec(req.url.split('?')[0]);
+  if (refMatch && req.method === 'GET') {
+    const refPath = path.join(__dirname, 'public', 'reference', refMatch[1]);
+    if (!fs.existsSync(refPath)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: `reference/${refMatch[1]} not found — run: node tools/build-reference.js` }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(fs.readFileSync(refPath));
+    return;
+  }
+
   // Save an exported XLSX to the exports/ folder
   if (req.url.startsWith('/exports') && req.method === 'POST') {
     const params = new URL(req.url, `http://localhost:${PORT}`).searchParams;
